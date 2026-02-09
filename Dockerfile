@@ -1,0 +1,20 @@
+FROM ruby:3.4.1-bookworm
+
+# Rails + pg gem build dependencies
+RUN apt-get update -qq && \
+  apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    libpq-dev \
+    curl \
+    ca-certificates && \
+  rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Keep bundler path consistent with ruby image default (GEM_HOME=/usr/local/bundle).
+# In development we bind-mount the app and use a named volume for /usr/local/bundle,
+# so we intentionally do NOT run `bundle install` at image build time.
+ENV BUNDLE_PATH=/usr/local/bundle \
+    BUNDLE_JOBS=4 \
+    BUNDLE_RETRY=3

@@ -1,0 +1,10 @@
+.git
+.DS_Store
+.bundle
+log
+tmp
+node_modules
+vendor/bundle
+rails/log
+rails/tmp
+rails/node_modules
