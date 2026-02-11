@@ -95,18 +95,26 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: kami_treasure_battle_production
-    username: kami_treasure_battle
-    password: <%= ENV["KAMI_TREASURE_BATTLE_DATABASE_PASSWORD"] %>
+    # Prefer DATABASE_URL if provided (Cloud Run / Cloud SQLで扱いやすい)
+    # Example (Cloud SQL unix socket):
+    #   DATABASE_URL="postgresql://USER:PASSWORD@/DBNAME?host=/cloudsql/INSTANCE_CONNECTION_NAME"
+    url: <%= ENV["DATABASE_URL"] %>
+
+    # Or configure via individual env vars.
+    database: <%= ENV.fetch("DB_NAME_PRODUCTION", "kami_treasure_battle_production") %>
+    username: <%= ENV["DB_USERNAME"] %>
+    password: <%= ENV["DB_PASSWORD"] %>
+    host: <%= ENV["DB_HOST"].to_s.empty? ? ENV["DB_SOCKET"] : ENV["DB_HOST"] %>
+    port: <%= ENV.fetch("DB_PORT", 5432) %>
   cache:
     <<: *primary_production
-    database: kami_treasure_battle_production_cache
+    database: <%= ENV.fetch("DB_NAME_PRODUCTION_CACHE", "#{ENV.fetch("DB_NAME_PRODUCTION", "kami_treasure_battle_production")}_cache") %>
     migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
-    database: kami_treasure_battle_production_queue
+    database: <%= ENV.fetch("DB_NAME_PRODUCTION_QUEUE", "#{ENV.fetch("DB_NAME_PRODUCTION", "kami_treasure_battle_production")}_queue") %>
     migrations_paths: db/queue_migrate
   cable:
     <<: *primary_production
-    database: kami_treasure_battle_production_cable
+    database: <%= ENV.fetch("DB_NAME_PRODUCTION_CABLE", "#{ENV.fetch("DB_NAME_PRODUCTION", "kami_treasure_battle_production")}_cable") %>
     migrations_paths: db/cable_migrate
