@@ -1,3 +1,35 @@
-<h1>kami-treasure-battle</h1>
-<p>Rails is running on Cloud Run.</p>
+<div class="ktb-page">
+  <div>
+    <div class="ktb-card" aria-label="カード表示（デモ）">
+      <div class="ktb-frame ktb-frame--copper">
+        <div class="ktb-frame__inner">
+          <div class="ktb-card__title">ガルカニック・フィスト</div>
+
+          <div class="ktb-card__art">
+            <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
+              <%= image_tag(
+                    "Gemini_Generated_Image_8p5cyv8p5cyv8p5c.png",
+                    alt: "カード画像（デモ）",
+                    class: "ktb-card__artImage",
+                    loading: "lazy",
+                    decoding: "async"
+                  ) %>
+            </div>
+          </div>
+
+          <div class="ktb-card__footer">
+            <div class="ktb-pill">攻撃力: 20</div>
+            <div class="ktb-badge"><span>✊</span></div>
+            <div class="ktb-pill">グー</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ktb-note">
+      画像の「正方形トリミング」はCSS（<code>object-fit: cover</code>）で表示上の切り抜きをしています。
+      もし「ファイルとして」正方形PNGを生成したければ、別途タスク（ImageMagick/ActiveStorage variant等）で対応できます。
+    </div>
+  </div>
+</div>
 

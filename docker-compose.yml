@@ -24,6 +24,7 @@ services:
       DB_NAME: kami_treasure_battle_development
     volumes:
       - ./rails:/app
+      - ./png:/png:ro
       - bundle_cache:/usr/local/bundle
     ports:
       - "3000:3000"
@@ -31,7 +32,7 @@ services:
       - db
     stdin_open: true
     tty: true
-    command: bash -lc "bundle install && bin/rails db:prepare && bin/rails server -b 0.0.0.0 -p 3000"
+    command: bash -lc "bundle install && bin/rails db:prepare && rm -f tmp/pids/server.pid && bin/rails server -b 0.0.0.0 -p 3000"
 
 volumes:
   db_data:
