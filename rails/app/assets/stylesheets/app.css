@@ -55,6 +55,10 @@ body {
   padding: 14px;
 }
 
+.ktb-frame--copper {
+  overflow: hidden; /* prevent ornate layers bleeding outside */
+}
+
 .ktb-frame::before {
   content: "";
   position: absolute;
@@ -70,7 +74,7 @@ body {
 
 .ktb-frame--copper::before {
   /* Ornate golden frame (border ring) */
-  z-index: 0;
+  z-index: 2;
   padding: 10px; /* thickness */
   border-radius: 16px;
   background:
@@ -90,9 +94,9 @@ body {
       rgba(255, 244, 210, 1.0)
     );
   box-shadow:
-    0 22px 42px rgba(0, 0, 0, 0.30),
     0 0 0 1px rgba(255, 244, 210, 0.35) inset,
-    0 1px 0 rgba(255, 244, 210, 0.35) inset;
+    0 1px 0 rgba(255, 244, 210, 0.35) inset,
+    0 0 0 10px rgba(0, 0, 0, 0.18) inset;
   pointer-events: none;
 
   /* cut out the center -> border ring only */
@@ -111,7 +115,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 16px;
-  z-index: 0;
+  z-index: 2;
   pointer-events: none;
   background:
     /* inner thin gold line */
@@ -130,12 +134,23 @@ body {
   padding: 10px;
   background-clip: padding-box, border-box, border-box, border-box, border-box, border-box, border-box, border-box;
   opacity: 0.95;
+
+  /* cut out the center -> keep contents (incl. diagonal lines) visible */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
 
 .ktb-frame__inner {
   height: 100%;
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(20, 26, 34, 0.95), rgba(20, 26, 34, 0.75));
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -151,8 +166,8 @@ body {
     /* etched pattern */
     repeating-linear-gradient(
       135deg,
-      rgba(255, 210, 160, 0.05) 0px,
-      rgba(255, 210, 160, 0.05) 2px,
+      rgba(255, 210, 160, 0.09) 0px,
+      rgba(255, 210, 160, 0.09) 2px,
       rgba(0, 0, 0, 0.0) 2px,
       rgba(0, 0, 0, 0.0) 10px
     ),
@@ -175,13 +190,14 @@ body {
 
 .ktb-card__art {
   display: grid;
-  place-items: center;
+  place-items: stretch;
+  margin: 0 -8px; /* reduce side padding so art gets closer to the frame */
 }
 
 /* Square crop (display-level) */
 .ktb-card__artSquare {
   width: 100%;
-  max-width: 260px;
+  max-width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 14px;
   overflow: hidden;
