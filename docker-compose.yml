@@ -22,6 +22,11 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: kami_treasure_battle_development
+      # Receipt upload (GCS)
+      # These are expected to be provided via host env or a `.env` file.
+      GCS_BUCKET: ${GCS_BUCKET}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
     volumes:
       - ./rails:/app
       - ./png:/png:ro

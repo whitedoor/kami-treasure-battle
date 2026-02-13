@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Deploy current workspace to Cloud Run via Cloud Build.
+#
+# Usage:
+#   bin/deploy_cloud_run
+#
+# Environment variables:
+#   PROJECT   (default: current gcloud project)
+#   REGION    (default: asia-northeast1)
+#   SERVICE   (default: kami-treasure-battle)
+#   AR_REPO   (default: backend)
+#   IMAGE_NAME(default: kami-treasure-battle)
+#
+# Optional:
+#   TAG       (default: git sha or timestamp)
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "error: required command not found: $1" >&2
+    exit 127
+  }
+}
+
+need gcloud
+need git
+
+PROJECT="${PROJECT:-$(gcloud config get-value project 2>/dev/null || true)}"
+REGION="${REGION:-asia-northeast1}"
+SERVICE="${SERVICE:-kami-treasure-battle}"
+AR_REPO="${AR_REPO:-backend}"
+IMAGE_NAME="${IMAGE_NAME:-kami-treasure-battle}"
+
+if [[ -z "${PROJECT}" ]]; then
+  echo "error: PROJECT is not set and gcloud project is empty" >&2
+  echo "hint: set it via: gcloud config set project YOUR_PROJECT" >&2
+  exit 1
+fi
+
+SHA="$(git rev-parse --short HEAD 2>/dev/null || true)"
+TAG="${TAG:-${SHA:-local-$(date +%Y%m%d-%H%M%S)}}"
+
+IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/${IMAGE_NAME}:${TAG}"
+
+echo "==> Building on Cloud Build"
+echo "    IMAGE: ${IMAGE}"
+gcloud builds submit --tag "${IMAGE}" --project "${PROJECT}"
+
+echo "==> Updating Cloud Run service"
+echo "    SERVICE: ${SERVICE}"
+echo "    REGION : ${REGION}"
+gcloud run services update "${SERVICE}" \
+  --region "${REGION}" \
+  --project "${PROJECT}" \
+  --image "${IMAGE}"
+
+echo "==> Done"
+gcloud run services describe "${SERVICE}" \
+  --region "${REGION}" \
+  --project "${PROJECT}" \
+  --format="value(status.url)"
