@@ -12,6 +12,9 @@
   --ktb-copper-dark: #5a2f18;
   --ktb-copper-base: #b87333;
   --ktb-copper-light: #ffd2a0;
+  --ktb-copper-panel-top: rgba(255, 244, 210, 0.18);
+  --ktb-copper-panel-mid: rgba(245, 208, 122, 0.12);
+  --ktb-copper-panel-bottom: rgba(184, 115, 51, 0.10);
 }
 
 html,
@@ -152,7 +155,12 @@ body {
   z-index: 1;
   box-sizing: border-box;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(20, 26, 34, 0.95), rgba(20, 26, 34, 0.75));
+  background: linear-gradient(
+    180deg,
+    var(--ktb-copper-panel-top),
+    var(--ktb-copper-panel-mid) 45%,
+    var(--ktb-copper-panel-bottom)
+  );
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -171,7 +179,12 @@ body {
       rgba(0, 0, 0, 0.0) 2px,
       rgba(0, 0, 0, 0.0) 10px
     ),
-    linear-gradient(180deg, rgba(20, 26, 34, 0.95), rgba(20, 26, 34, 0.75));
+    linear-gradient(
+      180deg,
+      var(--ktb-copper-panel-top),
+      var(--ktb-copper-panel-mid) 45%,
+      var(--ktb-copper-panel-bottom)
+    );
   box-shadow:
     0 1px 0 rgba(255, 210, 160, 0.10) inset,
     0 0 0 1px rgba(90, 47, 24, 0.20);
@@ -201,11 +214,15 @@ body {
   aspect-ratio: 1 / 1;
   border-radius: 14px;
   overflow: hidden;
-  background: #0e131a;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background:
+    radial-gradient(120% 90% at 25% 15%, rgba(255, 244, 210, 0.38), rgba(0, 0, 0, 0.0) 55%),
+    radial-gradient(120% 90% at 80% 90%, rgba(245, 208, 122, 0.22), rgba(0, 0, 0, 0.0) 55%),
+    linear-gradient(180deg, rgba(255, 244, 210, 0.16), rgba(184, 115, 51, 0.08));
+  background-color: rgba(255, 244, 210, 0.14); /* fallback (avoid dark flash) */
+  border: 1px solid rgba(184, 115, 51, 0.28);
   box-shadow:
-    0 14px 30px rgba(0, 0, 0, 0.45),
-    0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    0 14px 30px rgba(90, 47, 24, 0.22),
+    0 1px 0 rgba(255, 244, 210, 0.12) inset;
 }
 
 .ktb-card__artImage {
