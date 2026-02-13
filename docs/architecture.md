@@ -96,70 +96,66 @@ sequenceDiagram
 ### レシートからカード生成（OCR + 生成AI + 画像合成）
 
 要件（`docs/create-card.md`）:
-- レシート画像から「商品名/金額/購入店舗」を抽出し、カード名（魔法っぽい）/攻撃力（20,30,40,50）/じゃんけん（グー,チョキ,パー）/画像（魔法を唱えている絵）を生成する
-- 「レアリティ × じゃんけん」ごとの枠テンプレ画像に、生成アート＋テキストを合成して最終カード画像を作る
-- 画像はGCSに保存し、同時にDBに所持カード情報を保存する
 
-設計方針:
-- 画像生成は時間がかかるため **非同期ジョブ** として実行（HTTPタイムアウト回避、再試行、冪等性）
-- 抽出/生成は **Vertex AI（Gemini）** を中心に、OCRは **Vision AI** を併用
-- 生成物（レシート原本/中間生成アート/最終カード）は **GCS** に保存（RailsはActive Storage経由でも可）
+草案（GCP実現案）:
+- **入口（アップロード）**: ブラウザ → Rails（Cloud Run）
+  - Active Storage（本番は **GCS**）を使い、レシート画像を `<env>/receipts/` に保存（例: `development/receipts/`。可能なら **Direct Upload** でブラウザ→GCS、Railsはメタデータのみ受ける）
+  - DB（Cloud SQL）に `receipt_uploads`（`status: uploaded/processing/failed/completed` 等）を作成し、ユーザーと紐づけて **先に保存**（要件どおり）
+- **非同期実行（ジョブ）**: Rails → **Pub/Sub**（topic: `card-generation`）→ 生成ワーカー（Cloud Run）
+  - 生成ワーカーは「再試行しやすい・冪等にしやすい」単位で動かす（`receipt_upload_id` をキーに、二重実行しても最終結果が壊れない設計）
+- **OCR（商品名・金額の抽出）**:
+  - 第一候補: **Document AI**（レシート/領収書に強いプロセッサが使える場合はそれを利用）
+  - 代替: **Cloud Vision API（Text Detection）** + Vertex AI（後段で構造化）
+  - OCRの生テキスト/構造化結果は監査・再現性のために `receipt_uploads.ocr_text` / `receipt_uploads.ocr_json` 等で保存
+- **構造化 + テキスト生成（カード名/じゃんけん/説明文など）**:
+  - **Vertex AI（Gemini）** に「商品名・金額の配列」抽出と、カードテキスト生成を依頼
+  - 生成出力は **JSONスキーマ固定**（例: `{items:[{name,price}], card:{name, hand, flavor}}`）にして、Rails側でバリデーション
+  - **攻撃力（20/30/40/50の重み付き）とレアリティ**は不正/再現性の観点から **アプリ側で決定**（LLMには決めさせず、必要なら理由文だけ生成させる）
+- **画像生成（魔法を唱えている感・正方形）**:
+  - **Vertex AI Image Generation（Imagen系）** でアート（正方形）を生成し、`<env>/artworks/` に保存
+  - 生成用プロンプトは「商品名・金額」から組み立て、禁則/セーフティ/画風固定（統一感）を入れる
+- **画像合成（カード化）**:
+  - ワーカー（Cloud Run）でフレームテンプレ（`frames/`、例: rarity×hand）を読み込み
+  - 画像合成（アート + フレーム + テキスト描画）して最終カード画像を生成し、`<env>/cards/` に保存
+- **永続化（ユーザー紐付け）**:
+  - DBに `cards`（テキスト/メタ/アートURL/カード画像URL/rarity/hand/atk 等）を保存し、`owned_cards` でユーザーと紐付け
+  - 画像ファイル名（GCSのオブジェクトキー）をDBに保持（要件どおり）。配信は署名URL/公開バケット/Cloud CDN等を将来選択
+- **運用（必須最小）**:
+  - **Secret Manager**: APIキー/サービスアカウント関連の秘匿
+  - **Cloud Logging / Error Reporting**: 失敗原因の可観測性
+  - **レート制限**: ユーザー単位の生成回数制限（コスト爆発と不正対策）
 
+データフロー（例）:
 ```mermaid
 sequenceDiagram
   participant Web as Browser
-  participant Rails as Rails
-  participant DB as PostgreSQL
+  participant Rails as Rails (Cloud Run)
   participant GCS as Cloud Storage
-  participant Q as Queue(Cloud Tasks/PubSub)
-  participant W as Worker(Cloud Run Job/Service)
-  participant Vision as Vision AI(OCR)
-  participant Gemini as Vertex AI Gemini
-  participant Imagen as Vertex AI Imagen
+  participant PS as Pub/Sub
+  participant W as Worker (Cloud Run)
+  participant OCR as Document AI / Vision
+  participant VAI as Vertex AI (Gemini/Imagen)
+  participant DB as Cloud SQL (PostgreSQL)
 
-  Web->>Rails: POST /receipts (image upload)
-  Rails->>DB: INSERT receipt_uploads(status=uploaded)
-  Rails->>GCS: Save original receipt image
-  Rails->>DB: UPDATE receipt_uploads(gcs_path, status=queued)
-  Rails->>Q: Enqueue GenerateCardJob(receipt_id)
-  Rails-->>Web: 202 Accepted (job_id / receipt_id)
+  Web->>Rails: レシートアップロード開始
+  Rails->>DB: receipt_uploads 作成(status=uploaded)
+  Rails->>GCS: 画像保存（Direct Upload推奨）
+  Rails->>PS: publish(receipt_upload_id)
+  Rails-->>Web: 202 + receipt_upload_id
 
-  Q->>W: Deliver GenerateCardJob(receipt_id)
-  W->>DB: UPDATE jobs(status=running, started_at=now)
-  W->>GCS: Load receipt image
-  W->>Vision: OCR(receipt image)
-  Vision-->>W: OCR text
-
-  W->>Gemini: Extract+Normalize JSON from OCR (product/amount/store)
-  Gemini-->>W: Structured fields (JSON)
-
-  W->>Gemini: Decide card spec + prompt (attack/hand/rarity/card_name/imagen_prompt)
-  Gemini-->>W: Card spec (JSON)
-
-  W->>Imagen: Generate artwork(imagen_prompt)
-  Imagen-->>W: Artwork image
-  W->>GCS: Save artwork image
-
-  W->>GCS: Load frame template (rarity x hand)
-  W->>W: Compose final card image (frame + artwork + texts)
-  W->>GCS: Save final card image
-
-  W->>DB: BEGIN
-  W->>DB: INSERT cards(...) / receipt-derived metadata
-  W->>DB: INSERT owned_cards(user_id, card_id, source=receipt)
-  W->>DB: UPDATE receipt_uploads(status=completed, card_id=...)
-  W->>DB: UPDATE jobs(status=completed, finished_at=now)
-  W->>DB: COMMIT
-
-  Web->>Rails: GET /receipts/:id (poll status)
-  Rails->>DB: SELECT receipt_uploads + card_id
-  Rails-->>Web: 200 (status + card + image URLs)
+  PS-->>W: trigger(receipt_upload_id)
+  W->>DB: status=processing
+  W->>GCS: レシート画像取得
+  W->>OCR: OCR実行
+  OCR-->>W: OCR結果（テキスト/構造）
+  W->>VAI: Geminiで items抽出 + テキスト生成(JSON)
+  VAI-->>W: 構造化JSON + 文言
+  W->>VAI: Imagenでアート生成（正方形）
+  VAI-->>W: 生成画像
+  W->>GCS: <env>/artworks/ と <env>/cards/ 保存（合成後）
+  W->>DB: cards/owned_cards 保存 + status=completed
+  Rails-->>Web: ポーリング/通知で結果表示
 ```
-
-失敗時の扱い（最低限）:
-- OCR/抽出/生成のどこで失敗したかを `jobs.last_error` 等に保存し、`status=failed` にする
-- 一時障害（429/5xx）はジョブ基盤の再試行に任せる（最大回数/バックオフ）
-- 冪等性: `receipt_id` をキーに「同じレシートからカードが二重生成されない」ようDBで一意制約/ロックを持つ
 
 ## MVPでの責務分割（実装の目安）
 
@@ -217,7 +213,7 @@ flowchart TB
 - 枠テンプレ画像の仕様（サイズ、セーフエリア、テキスト位置、フォント）
 
 ### Phase 1: 保存基盤（1〜2日）
-- GCSバケット設計（`receipts/`, `artworks/`, `cards/`, `frames/` 等のプレフィックス）
+- GCSバケット設計（環境プレフィックス込みで `<env>/receipts/`, `<env>/artworks/`, `<env>/cards/`。`frames/` は共通アセットとして環境分離しない運用も可）
 - Active Storage をGCSに向ける（本番）/ ローカル（開発）を切り替え可能にする
 - Cloud SQL接続、Secret Managerで鍵/設定を管理
 - IAM最小権限（Cloud Run → GCS/Vertex/Vision へのアクセス）
