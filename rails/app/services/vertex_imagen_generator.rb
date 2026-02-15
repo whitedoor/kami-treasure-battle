@@ -81,9 +81,34 @@ class VertexImagenGenerator
       raise Error, "#{message} (status=#{res.code})"
     end
 
-    prediction = json&.dig("predictions", 0) || {}
-    b64 = prediction["bytesBase64Encoded"].to_s
-    out_mime = prediction["mimeType"].to_s.presence || mime_type
+    predictions = json.is_a?(Hash) ? json["predictions"] : nil
+    unless predictions.is_a?(Array) && predictions.any?
+      details = []
+      details << "model=#{model}"
+      details << "location=#{location}"
+      details << "top_keys=#{json.keys.sort.join(',')}" if json.is_a?(Hash)
+      raise Error, "Imagen response did not include predictions (#{details.join(' ')})"
+    end
+
+    prediction = predictions[0]
+    unless prediction.is_a?(Hash)
+      details = []
+      details << "model=#{model}"
+      details << "location=#{location}"
+      details << "prediction0_class=#{prediction.class}"
+      raise Error, "Imagen response prediction[0] was not an object (#{details.join(' ')})"
+    end
+
+    b64 =
+      prediction["bytesBase64Encoded"].to_s.presence ||
+      prediction.dig("image", "bytesBase64Encoded").to_s.presence ||
+      prediction.dig("image", "bytesBase64").to_s.presence ||
+      ""
+
+    out_mime =
+      prediction["mimeType"].to_s.presence ||
+      prediction.dig("image", "mimeType").to_s.presence ||
+      mime_type
     if b64.empty?
       filtered =
         prediction["raiFilteredReason"].presence ||
@@ -94,7 +119,7 @@ class VertexImagenGenerator
       details = []
       details << "model=#{model}"
       details << "location=#{location}"
-      details << "prediction_keys=#{prediction.is_a?(Hash) ? prediction.keys.sort.join(',') : prediction.class}"
+      details << "prediction_keys=#{prediction.keys.sort.join(',')}"
       details << "raiFilteredReason=#{prediction['raiFilteredReason']}" if prediction.is_a?(Hash) && prediction.key?("raiFilteredReason")
       details << "safetyAttributes=#{prediction['safetyAttributes'].to_json}" if prediction.is_a?(Hash) && prediction.key?("safetyAttributes")
 

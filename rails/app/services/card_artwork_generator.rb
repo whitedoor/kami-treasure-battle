@@ -52,8 +52,13 @@ class CardArtworkGenerator
   rescue VertexImagenGenerator::Error => e
     # Transient failures: retryable (quota, rate limiting, temporary service issues).
     msg = e.message.to_s
+    filtered = msg.match?(/filtered\/blocked/i)
+    missing_bytes = msg.match?(/did not contain image bytes/i)
+    missing_predictions = msg.match?(/did not include predictions|prediction\[0\]/i)
+
     transient =
-      msg.match?(/quota exceeded|resource_exhausted|rate|429|unavailable|deadline|timeout/i)
+      msg.match?(/quota exceeded|resource_exhausted|rate|429|unavailable|deadline|timeout/i) ||
+      ((missing_bytes || missing_predictions) && !filtered)
 
     if transient
       # Keep it in "generating" so the UI can keep polling for a while.
