@@ -23,10 +23,20 @@
       </div>
     </div>
 
+    <% is_starter_card = (@card.rarity == "normal") %>
     <% frame_theme =
-         case @card.rarity
-         when "bronze", "silver", "gold", "legend" then @card.rarity
-         else "normal"
+         if is_starter_card
+           case @card.hand
+           when "gu" then "starter-gu"
+           when "choki" then "starter-choki"
+           when "pa" then "starter-pa"
+           else "starter"
+           end
+         else
+           case @card.rarity
+           when "bronze", "silver", "gold", "legend" then @card.rarity
+           else "normal"
+           end
          end %>
     <div class="ktb-card" aria-label="カード表示">
       <div class="ktb-frame ktb-frame--ornate ktb-frame--<%= frame_theme %>">

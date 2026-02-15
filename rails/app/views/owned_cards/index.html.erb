@@ -15,10 +15,20 @@
       <div class="ktb-grid">
         <% @owned_cards.each do |owned| %>
           <% card = owned.card %>
+          <% is_starter_card = (card.rarity == "normal") %>
           <% frame_theme =
-               case card.rarity
-               when "bronze", "silver", "gold", "legend" then card.rarity
-               else "normal"
+               if is_starter_card
+                 case card.hand
+                 when "gu" then "starter-gu"
+                 when "choki" then "starter-choki"
+                 when "pa" then "starter-pa"
+                 else "starter"
+                 end
+               else
+                 case card.rarity
+                 when "bronze", "silver", "gold", "legend" then card.rarity
+                 else "normal"
+                 end
                end %>
           <%= link_to card_path(card), style: "text-decoration:none; color: inherit;" do %>
             <div class="ktb-card ktb-card--mini" aria-label="カード">

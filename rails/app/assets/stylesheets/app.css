@@ -226,6 +226,174 @@ body {
 }
 
 /* Rarity themes */
+.ktb-frame--starter {
+  /* Starter (= default) cards: white frame */
+  --ktb-frame-ring-1: rgba(255, 255, 255, 1.0);
+  --ktb-frame-ring-2: rgba(246, 247, 251, 0.98);
+  --ktb-frame-ring-3: rgba(205, 212, 226, 0.98);
+  --ktb-frame-ring-4: rgba(255, 255, 255, 0.98);
+  --ktb-frame-ring-5: rgba(140, 150, 170, 0.98);
+  --ktb-frame-ring-6: rgba(255, 255, 255, 1.0);
+  --ktb-frame-ring-highlight: rgba(255, 255, 255, 0.40);
+
+  --ktb-frame-glow-1: rgba(255, 255, 255, 0.20);
+  --ktb-frame-glow-2: rgba(210, 230, 255, 0.12);
+
+  --ktb-panel-top: rgba(232, 240, 255, 0.14);
+  --ktb-panel-mid: rgba(210, 220, 235, 0.10);
+  --ktb-panel-bottom: rgba(130, 145, 170, 0.09);
+  --ktb-panel-solid: rgba(232, 240, 255, 0.14);
+  --ktb-etch: rgba(220, 230, 245, 0.08);
+  --ktb-inner-border: rgba(200, 210, 225, 0.55);
+  --ktb-inner-sheen: rgba(230, 240, 255, 0.10);
+  --ktb-inner-outline: rgba(60, 70, 90, 0.22);
+  --ktb-line-top: rgba(255, 255, 255, 0.76);
+  --ktb-line-bottom: rgba(205, 212, 226, 0.42);
+
+  --ktb-accent-strong: rgba(200, 210, 225, 0.95);
+  --ktb-accent-soft: rgba(210, 230, 255, 0.18);
+  --ktb-chip-top: rgba(232, 240, 255, 0.18);
+  --ktb-chip-border: rgba(200, 210, 225, 0.30);
+  --ktb-pill-bg: rgba(232, 240, 255, 0.10);
+  --ktb-pill-border: rgba(200, 210, 225, 0.22);
+  --ktb-badge-border: rgba(200, 210, 225, 0.30);
+  --ktb-art-border: rgba(200, 210, 225, 0.26);
+  --ktb-art-bg: rgba(232, 240, 255, 0.12);
+
+  --ktb-ornament-dot-1: rgba(255, 255, 255, 0.95);
+  --ktb-ornament-dot-2: rgba(255, 255, 255, 0.90);
+  --ktb-ornament-dot-3: rgba(232, 240, 255, 0.88);
+  --ktb-ornament-dot-4: rgba(232, 240, 255, 0.88);
+  --ktb-ornament-sheen: rgba(232, 240, 255, 0.14);
+  --ktb-corner-ornament: none;
+}
+
+.ktb-frame--starter-gu {
+  /* Starter GU: red frame */
+  --ktb-frame-ring-1: rgba(255, 245, 245, 1.0);
+  --ktb-frame-ring-2: rgba(255, 200, 200, 0.98);
+  --ktb-frame-ring-3: rgba(210, 60, 60, 0.98);
+  --ktb-frame-ring-4: rgba(255, 225, 225, 0.98);
+  --ktb-frame-ring-5: rgba(120, 20, 20, 0.98);
+  --ktb-frame-ring-6: rgba(255, 245, 245, 1.0);
+  --ktb-frame-ring-highlight: rgba(255, 255, 255, 0.32);
+
+  --ktb-frame-glow-1: rgba(255, 160, 160, 0.22);
+  --ktb-frame-glow-2: rgba(255, 210, 210, 0.12);
+
+  --ktb-panel-top: rgba(255, 210, 210, 0.14);
+  --ktb-panel-mid: rgba(255, 160, 160, 0.10);
+  --ktb-panel-bottom: rgba(210, 60, 60, 0.08);
+  --ktb-panel-solid: rgba(255, 210, 210, 0.12);
+  --ktb-etch: rgba(255, 180, 180, 0.08);
+  --ktb-inner-border: rgba(255, 170, 170, 0.45);
+  --ktb-inner-sheen: rgba(255, 220, 220, 0.10);
+  --ktb-inner-outline: rgba(90, 20, 20, 0.22);
+  --ktb-line-top: rgba(255, 245, 245, 0.72);
+  --ktb-line-bottom: rgba(210, 60, 60, 0.40);
+
+  --ktb-accent-strong: rgba(255, 170, 170, 0.95);
+  --ktb-accent-soft: rgba(255, 160, 160, 0.18);
+  --ktb-chip-top: rgba(255, 210, 210, 0.18);
+  --ktb-chip-border: rgba(255, 170, 170, 0.30);
+  --ktb-pill-bg: rgba(255, 210, 210, 0.10);
+  --ktb-pill-border: rgba(255, 170, 170, 0.22);
+  --ktb-badge-border: rgba(255, 170, 170, 0.30);
+  --ktb-art-border: rgba(255, 170, 170, 0.26);
+  --ktb-art-bg: rgba(255, 210, 210, 0.12);
+
+  --ktb-ornament-dot-1: rgba(255, 245, 245, 0.95);
+  --ktb-ornament-dot-2: rgba(255, 245, 245, 0.90);
+  --ktb-ornament-dot-3: rgba(255, 210, 210, 0.88);
+  --ktb-ornament-dot-4: rgba(255, 210, 210, 0.88);
+  --ktb-ornament-sheen: rgba(255, 210, 210, 0.14);
+  --ktb-corner-ornament: none;
+}
+
+.ktb-frame--starter-choki {
+  /* Starter CHOKI: yellow frame */
+  --ktb-frame-ring-1: rgba(255, 252, 225, 1.0);
+  --ktb-frame-ring-2: rgba(255, 236, 150, 0.98);
+  --ktb-frame-ring-3: rgba(210, 160, 30, 0.98);
+  --ktb-frame-ring-4: rgba(255, 246, 200, 0.98);
+  --ktb-frame-ring-5: rgba(120, 80, 15, 0.98);
+  --ktb-frame-ring-6: rgba(255, 252, 225, 1.0);
+  --ktb-frame-ring-highlight: rgba(255, 255, 255, 0.30);
+
+  --ktb-frame-glow-1: rgba(255, 230, 140, 0.22);
+  --ktb-frame-glow-2: rgba(255, 246, 200, 0.12);
+
+  --ktb-panel-top: rgba(255, 246, 200, 0.14);
+  --ktb-panel-mid: rgba(255, 236, 150, 0.10);
+  --ktb-panel-bottom: rgba(210, 160, 30, 0.08);
+  --ktb-panel-solid: rgba(255, 246, 200, 0.12);
+  --ktb-etch: rgba(255, 236, 150, 0.08);
+  --ktb-inner-border: rgba(255, 224, 120, 0.45);
+  --ktb-inner-sheen: rgba(255, 252, 225, 0.10);
+  --ktb-inner-outline: rgba(90, 60, 10, 0.22);
+  --ktb-line-top: rgba(255, 252, 225, 0.72);
+  --ktb-line-bottom: rgba(210, 160, 30, 0.40);
+
+  --ktb-accent-strong: rgba(255, 224, 120, 0.95);
+  --ktb-accent-soft: rgba(255, 236, 150, 0.18);
+  --ktb-chip-top: rgba(255, 246, 200, 0.18);
+  --ktb-chip-border: rgba(255, 224, 120, 0.30);
+  --ktb-pill-bg: rgba(255, 246, 200, 0.10);
+  --ktb-pill-border: rgba(255, 224, 120, 0.22);
+  --ktb-badge-border: rgba(255, 224, 120, 0.30);
+  --ktb-art-border: rgba(255, 224, 120, 0.26);
+  --ktb-art-bg: rgba(255, 246, 200, 0.12);
+
+  --ktb-ornament-dot-1: rgba(255, 252, 225, 0.95);
+  --ktb-ornament-dot-2: rgba(255, 252, 225, 0.90);
+  --ktb-ornament-dot-3: rgba(255, 246, 200, 0.88);
+  --ktb-ornament-dot-4: rgba(255, 246, 200, 0.88);
+  --ktb-ornament-sheen: rgba(255, 246, 200, 0.14);
+  --ktb-corner-ornament: none;
+}
+
+.ktb-frame--starter-pa {
+  /* Starter PA: blue frame */
+  --ktb-frame-ring-1: rgba(240, 248, 255, 1.0);
+  --ktb-frame-ring-2: rgba(180, 215, 255, 0.98);
+  --ktb-frame-ring-3: rgba(40, 120, 220, 0.98);
+  --ktb-frame-ring-4: rgba(210, 235, 255, 0.98);
+  --ktb-frame-ring-5: rgba(10, 45, 110, 0.98);
+  --ktb-frame-ring-6: rgba(240, 248, 255, 1.0);
+  --ktb-frame-ring-highlight: rgba(255, 255, 255, 0.30);
+
+  --ktb-frame-glow-1: rgba(180, 215, 255, 0.22);
+  --ktb-frame-glow-2: rgba(210, 235, 255, 0.12);
+
+  --ktb-panel-top: rgba(210, 235, 255, 0.14);
+  --ktb-panel-mid: rgba(180, 215, 255, 0.10);
+  --ktb-panel-bottom: rgba(40, 120, 220, 0.08);
+  --ktb-panel-solid: rgba(210, 235, 255, 0.12);
+  --ktb-etch: rgba(180, 215, 255, 0.08);
+  --ktb-inner-border: rgba(170, 205, 245, 0.45);
+  --ktb-inner-sheen: rgba(210, 235, 255, 0.10);
+  --ktb-inner-outline: rgba(15, 30, 70, 0.24);
+  --ktb-line-top: rgba(240, 248, 255, 0.72);
+  --ktb-line-bottom: rgba(40, 120, 220, 0.40);
+
+  --ktb-accent-strong: rgba(170, 205, 245, 0.95);
+  --ktb-accent-soft: rgba(180, 215, 255, 0.18);
+  --ktb-chip-top: rgba(210, 235, 255, 0.18);
+  --ktb-chip-border: rgba(170, 205, 245, 0.30);
+  --ktb-pill-bg: rgba(210, 235, 255, 0.10);
+  --ktb-pill-border: rgba(170, 205, 245, 0.22);
+  --ktb-badge-border: rgba(170, 205, 245, 0.30);
+  --ktb-art-border: rgba(170, 205, 245, 0.26);
+  --ktb-art-bg: rgba(210, 235, 255, 0.12);
+
+  --ktb-ornament-dot-1: rgba(240, 248, 255, 0.95);
+  --ktb-ornament-dot-2: rgba(240, 248, 255, 0.90);
+  --ktb-ornament-dot-3: rgba(210, 235, 255, 0.88);
+  --ktb-ornament-dot-4: rgba(210, 235, 255, 0.88);
+  --ktb-ornament-sheen: rgba(210, 235, 255, 0.14);
+  --ktb-corner-ornament: none;
+}
+
 .ktb-frame--normal,
 .ktb-frame--bronze,
 .ktb-frame--copper {
