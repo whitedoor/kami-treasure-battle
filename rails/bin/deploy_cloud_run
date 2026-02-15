@@ -15,6 +15,16 @@ set -euo pipefail
 #
 # Optional:
 #   TAG       (default: git sha or timestamp)
+#
+# Gemini (production):
+#   GEMINI_MODEL            (default: gemini-2.0-flash)
+#   GEMINI_API_KEY_SECRET   (default: ${SERVICE}-gemini-api-key)
+#   GEMINI_API_KEY          (optional; if set, stored to Secret Manager as latest)
+#   ALLOW_UNAUTHENTICATED   (default: true; only used when service does not exist yet)
+#
+# Storage (production):
+#   GCS_BUCKET              (optional; if blank, default: ${PROJECT}_cloudbuild)
+#   PROVISION_BUCKET        (default: true)
 
 need() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -26,11 +36,20 @@ need() {
 need gcloud
 need git
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "${ROOT_DIR}"
+
 PROJECT="${PROJECT:-$(gcloud config get-value project 2>/dev/null || true)}"
 REGION="${REGION:-asia-northeast1}"
 SERVICE="${SERVICE:-kami-treasure-battle}"
 AR_REPO="${AR_REPO:-backend}"
 IMAGE_NAME="${IMAGE_NAME:-kami-treasure-battle}"
+GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.0-flash-001}"
+GEMINI_API_KEY_SECRET="${GEMINI_API_KEY_SECRET:-${SERVICE}-gemini-api-key}"
+ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-true}"
+GCS_BUCKET="${GCS_BUCKET:-}"
+PROVISION_BUCKET="${PROVISION_BUCKET:-true}"
+GEMINI_VERTEX_LOCATION="${GEMINI_VERTEX_LOCATION:-us-central1}"
 
 if [[ -z "${PROJECT}" ]]; then
   echo "error: PROJECT is not set and gcloud project is empty" >&2
@@ -43,17 +62,151 @@ TAG="${TAG:-${SHA:-local-$(date +%Y%m%d-%H%M%S)}}"
 
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/${IMAGE_NAME}:${TAG}"
 
+echo "==> Ensuring required APIs are enabled"
+gcloud services enable \
+  --project "${PROJECT}" \
+  apikeys.googleapis.com \
+  generativelanguage.googleapis.com \
+  secretmanager.googleapis.com \
+  aiplatform.googleapis.com \
+  storage.googleapis.com >/dev/null
+
+if [[ -z "${GCS_BUCKET}" ]]; then
+  # Keep it stable across deploys.
+  # NOTE: This uses the Cloud Build bucket by default (user preference).
+  GCS_BUCKET="${PROJECT}_cloudbuild"
+  echo "==> GCS_BUCKET is blank. Using default: ${GCS_BUCKET}"
+fi
+
+ensure_bucket_exists() {
+  local bucket_name="$1"
+  if gcloud storage buckets describe "gs://${bucket_name}" --project "${PROJECT}" >/dev/null 2>&1; then
+    return 0
+  fi
+  if [[ "${PROVISION_BUCKET}" != "true" ]]; then
+    echo "error: bucket does not exist and PROVISION_BUCKET!=true: ${bucket_name}" >&2
+    exit 1
+  fi
+  echo "==> Creating GCS bucket: ${bucket_name} (location: ${REGION})"
+  gcloud storage buckets create "gs://${bucket_name}" \
+    --project "${PROJECT}" \
+    --location "${REGION}" \
+    --uniform-bucket-level-access >/dev/null
+}
+
+ensure_secret_exists() {
+  local secret_name="$1"
+  if gcloud secrets describe "${secret_name}" --project "${PROJECT}" >/dev/null 2>&1; then
+    return 0
+  fi
+  gcloud secrets create "${secret_name}" --project "${PROJECT}" --replication-policy="automatic" >/dev/null
+}
+
+add_secret_version() {
+  local secret_name="$1"
+  local secret_value="$2"
+  printf "%s" "${secret_value}" | gcloud secrets versions add "${secret_name}" --project "${PROJECT}" --data-file=- >/dev/null
+}
+
+create_gemini_api_key() {
+  local display_name="$1"
+  local created_json key_string
+  created_json="$(
+    gcloud services api-keys create \
+      --project "${PROJECT}" \
+      --display-name "${display_name}" \
+      --api-target=service=generativelanguage.googleapis.com \
+      --format=json
+  )"
+
+  # The create response includes the key string. Avoid printing it to stdout.
+  key_string="$(ruby -rjson -e 'j=JSON.parse(STDIN.read); puts(j["keyString"].to_s)' <<<"${created_json}")"
+
+  if [[ -z "${key_string}" ]]; then
+    echo "error: failed to create API key (keyString is empty)" >&2
+    exit 1
+  fi
+
+  printf "%s" "${key_string}"
+}
+
+echo "==> Preparing Gemini API key (Secret Manager)"
+ensure_secret_exists "${GEMINI_API_KEY_SECRET}"
+
+if [[ -n "${GEMINI_API_KEY:-}" ]]; then
+  echo "    Using GEMINI_API_KEY from environment (will store as latest secret version)"
+  add_secret_version "${GEMINI_API_KEY_SECRET}" "${GEMINI_API_KEY}"
+else
+  if gcloud secrets versions list "${GEMINI_API_KEY_SECRET}" --project "${PROJECT}" --filter="state=ENABLED" --limit 1 --format="value(name)" | grep -q .; then
+    echo "    GEMINI_API_KEY is not set. Using existing Secret Manager latest."
+  else
+    echo "    GEMINI_API_KEY is not set and secret has no enabled versions. Creating a new API key and storing it in Secret Manager."
+    key_string="$(create_gemini_api_key "${SERVICE} Gemini API (server)")"
+    if [[ -z "${key_string}" ]]; then
+      echo "error: failed to retrieve API key string" >&2
+      exit 1
+    fi
+    add_secret_version "${GEMINI_API_KEY_SECRET}" "${key_string}"
+  fi
+fi
+
 echo "==> Building on Cloud Build"
 echo "    IMAGE: ${IMAGE}"
-gcloud builds submit --tag "${IMAGE}" --project "${PROJECT}"
+gcloud builds submit \
+  --project "${PROJECT}" \
+  --config "cloudbuild.yaml" \
+  --substitutions "_REGION=${REGION},_AR_REPO=${AR_REPO},_IMAGE_NAME=${IMAGE_NAME},_TAG=${TAG}" \
+  .
 
 echo "==> Updating Cloud Run service"
 echo "    SERVICE: ${SERVICE}"
 echo "    REGION : ${REGION}"
-gcloud run services update "${SERVICE}" \
-  --region "${REGION}" \
+
+# Ensure the runtime service account can access the secret.
+runtime_sa="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --format="value(spec.template.spec.serviceAccountName)" 2>/dev/null || true)"
+if [[ -z "${runtime_sa}" ]]; then
+  project_number="$(gcloud projects describe "${PROJECT}" --format="value(projectNumber)")"
+  runtime_sa="${project_number}-compute@developer.gserviceaccount.com"
+fi
+
+ensure_bucket_exists "${GCS_BUCKET}"
+gcloud storage buckets add-iam-policy-binding "gs://${GCS_BUCKET}" \
   --project "${PROJECT}" \
-  --image "${IMAGE}"
+  --member "serviceAccount:${runtime_sa}" \
+  --role "roles/storage.objectCreator" >/dev/null || true
+
+# Allow Vertex AI (Gemini) calls from Cloud Run.
+gcloud projects add-iam-policy-binding "${PROJECT}" \
+  --member "serviceAccount:${runtime_sa}" \
+  --role "roles/aiplatform.user" >/dev/null || true
+
+gcloud secrets add-iam-policy-binding "${GEMINI_API_KEY_SECRET}" \
+  --project "${PROJECT}" \
+  --member "serviceAccount:${runtime_sa}" \
+  --role "roles/secretmanager.secretAccessor" >/dev/null || true
+
+set -x
+if gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT}" >/dev/null 2>&1; then
+  gcloud run services update "${SERVICE}" \
+    --region "${REGION}" \
+    --project "${PROJECT}" \
+    --image "${IMAGE}" \
+    --set-secrets "GEMINI_API_KEY=${GEMINI_API_KEY_SECRET}:latest" \
+    --set-env-vars "GEMINI_MODEL=${GEMINI_MODEL},GEMINI_AUTH_MODE=vertex,GEMINI_VERTEX_LOCATION=${GEMINI_VERTEX_LOCATION:-us-central1},GCS_BUCKET=${GCS_BUCKET},GCP_PROJECT_ID=${PROJECT}"
+else
+  deploy_flags=()
+  if [[ "${ALLOW_UNAUTHENTICATED}" == "true" ]]; then
+    deploy_flags+=(--allow-unauthenticated)
+  fi
+  gcloud run deploy "${SERVICE}" \
+    --region "${REGION}" \
+    --project "${PROJECT}" \
+    --image "${IMAGE}" \
+    --set-secrets "GEMINI_API_KEY=${GEMINI_API_KEY_SECRET}:latest" \
+    --set-env-vars "GEMINI_MODEL=${GEMINI_MODEL},GEMINI_AUTH_MODE=vertex,GEMINI_VERTEX_LOCATION=${GEMINI_VERTEX_LOCATION:-us-central1},GCS_BUCKET=${GCS_BUCKET},GCP_PROJECT_ID=${PROJECT}" \
+    "${deploy_flags[@]}"
+fi
+set +x
 
 echo "==> Done"
 gcloud run services describe "${SERVICE}" \

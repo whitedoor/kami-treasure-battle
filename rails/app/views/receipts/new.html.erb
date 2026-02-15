@@ -4,6 +4,9 @@
     <div style="opacity: 0.9;">
       モバイルでは「カメラ起動」になります（<code>capture</code>）。PCでは画像ファイル選択になります。
     </div>
+    <div style="opacity: 0.9; margin-top: 6px;">
+      画像アップロード後に Gemini API で抽出します（サーバ側に <code>GEMINI_API_KEY</code> の設定が必要）。
+    </div>
   </div>
 
   <div
@@ -20,6 +23,17 @@
         style="display:none;"
       >
     </label>
+
+    <button
+      type="button"
+      class="ktb-pill"
+      data-receipt-upload-target="submit"
+      data-action="click->receipt-upload#submit"
+      disabled
+      style="margin-left: 8px;"
+    >
+      アップロード開始
+    </button>
 
     <div data-receipt-upload-target="status" style="margin-top: 12px;"></div>
 

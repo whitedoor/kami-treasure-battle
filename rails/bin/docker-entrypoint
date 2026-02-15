@@ -2,7 +2,16 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${1:-}" == "./bin/rails" ] && [ "${2:-}" == "server" ]; then
-  ./bin/rails db:prepare
+  # Cloud RunなどDB未設定の段階でもWebを起動できるように、DB接続情報がある時だけ実行する。
+  # - DATABASE_URL / DB_HOST / DB_SOCKET が無い場合はスキップ（MVPの静的ページや外部API検証に便利）
+  # - 常にスキップしたい場合は SKIP_DB_PREPARE=1
+  if [ "${SKIP_DB_PREPARE:-}" == "1" ]; then
+    echo "SKIP_DB_PREPARE=1: skipping db:prepare"
+  elif [ -n "${DATABASE_URL:-}" ] || [ -n "${DB_HOST:-}" ] || [ -n "${DB_SOCKET:-}" ]; then
+    ./bin/rails db:prepare
+  else
+    echo "No DB env vars found: skipping db:prepare"
+  fi
 fi
 
 exec "${@}"

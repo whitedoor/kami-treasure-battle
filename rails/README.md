@@ -1,24 +1,51 @@
-# README
+# Railsアプリ（`rails/`）開発メモ
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+このリポジトリは、**開発はDocker Composeで起動**する想定です（Ruby/DBをローカルに入れなくても動くようにしています）。
 
-Things you may want to cover:
+## 起動（推奨: Docker Compose）
 
-* Ruby version
+リポジトリ直下で:
 
-* System dependencies
+```bash
+docker compose up
+```
 
-* Configuration
+初回は `web` コンテナ内で自動的に以下が実行されます:
 
-* Database creation
+- `bundle install`
+- `bin/rails db:prepare`
+- `bin/rails server -b 0.0.0.0 -p 3000`
 
-* Database initialization
+ブラウザで `http://localhost:3000` を開いてください。
 
-* How to run the test suite
+## 停止 / リセット
 
-* Services (job queues, cache servers, search engines, etc.)
+```bash
+docker compose down
+```
 
-* Deployment instructions
+DB含めて初期化:
 
-* ...
+```bash
+docker compose down -v
+```
+
+## Railsコマンド（例）
+
+```bash
+docker compose exec web bin/rails console
+docker compose exec web bin/rails routes
+docker compose exec web bin/rails db:migrate
+```
+
+## 任意: レシートアップロード（GCS）+ Gemini抽出
+
+Railsの起動自体には不要ですが、`/receipts/new` を使う場合は環境変数が必要です。
+
+- 例: `.env` を使う（リポジトリ直下）
+
+```bash
+cp .env.example .env
+```
+
+必要な値（`GCS_BUCKET` / `GEMINI_API_KEY` など）だけ埋めてから `docker compose up` してください。

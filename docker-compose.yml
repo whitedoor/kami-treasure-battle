@@ -23,10 +23,13 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: kami_treasure_battle_development
       # Receipt upload (GCS)
-      # These are expected to be provided via host env or a `.env` file.
-      GCS_BUCKET: ${GCS_BUCKET}
-      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+      # These are optional for boot. Set them via host env or a `.env` file
+      # only when you want to use the receipt upload feature.
+      #
+      # Use default empty values to avoid noisy warnings when unset.
+      GCS_BUCKET: ${GCS_BUCKET:-}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
     volumes:
       - ./rails:/app
       - ./png:/png:ro

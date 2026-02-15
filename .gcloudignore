@@ -1,0 +1,23 @@
+# Reduce upload size for `gcloud builds submit`.
+
+.git
+.github
+.cursor
+.DS_Store
+
+# Local env / secrets
+.env
+.env.*
+
+# Local dev artifacts
+**/log/**
+**/tmp/**
+**/storage/**
+**/.bundle/**
+**/node_modules/**
+
+# Large local-only assets
+png/**
+
+# Docs are not needed for building the image
+docs/**

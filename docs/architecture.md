@@ -97,33 +97,24 @@ sequenceDiagram
 
 要件（`docs/create-card.md`）:
 
-草案（GCP実現案）:
+同期版（まずは全体を動かす、非同期なし）:
+- **使うGCPサービスは1つだけ**: **Gemini API**
+  - 画像（レシート）を入力として渡し、(1) 商品名・金額の抽出（OCR相当）と (2) カード文言（カード名/じゃんけん/説明）を **単一リクエストでJSON出力**させる
+  - 生成出力は **JSONスキーマ固定**にして、Rails側でバリデーションして保存する
 - **入口（アップロード）**: ブラウザ → Rails（Cloud Run）
   - Active Storage（本番は **GCS**）を使い、レシート画像を `<env>/receipts/` に保存（例: `development/receipts/`。可能なら **Direct Upload** でブラウザ→GCS、Railsはメタデータのみ受ける）
-  - DB（Cloud SQL）に `receipt_uploads`（`status: uploaded/processing/failed/completed` 等）を作成し、ユーザーと紐づけて **先に保存**（要件どおり）
-- **非同期実行（ジョブ）**: Rails → **Pub/Sub**（topic: `card-generation`）→ 生成ワーカー（Cloud Run）
-  - 生成ワーカーは「再試行しやすい・冪等にしやすい」単位で動かす（`receipt_upload_id` をキーに、二重実行しても最終結果が壊れない設計）
-- **OCR（商品名・金額の抽出）**:
-  - 第一候補: **Document AI**（レシート/領収書に強いプロセッサが使える場合はそれを利用）
-  - 代替: **Cloud Vision API（Text Detection）** + Vertex AI（後段で構造化）
-  - OCRの生テキスト/構造化結果は監査・再現性のために `receipt_uploads.ocr_text` / `receipt_uploads.ocr_json` 等で保存
-- **構造化 + テキスト生成（カード名/じゃんけん/説明文など）**:
-  - **Vertex AI（Gemini）** に「商品名・金額の配列」抽出と、カードテキスト生成を依頼
-  - 生成出力は **JSONスキーマ固定**（例: `{items:[{name,price}], card:{name, hand, flavor}}`）にして、Rails側でバリデーション
-  - **攻撃力（20/30/40/50の重み付き）とレアリティ**は不正/再現性の観点から **アプリ側で決定**（LLMには決めさせず、必要なら理由文だけ生成させる）
-- **画像生成（魔法を唱えている感・正方形）**:
-  - **Vertex AI Image Generation（Imagen系）** でアート（正方形）を生成し、`<env>/artworks/` に保存
-  - 生成用プロンプトは「商品名・金額」から組み立て、禁則/セーフティ/画風固定（統一感）を入れる
-- **画像合成（カード化）**:
-  - ワーカー（Cloud Run）でフレームテンプレ（`frames/`、例: rarity×hand）を読み込み
-  - 画像合成（アート + フレーム + テキスト描画）して最終カード画像を生成し、`<env>/cards/` に保存
-- **永続化（ユーザー紐付け）**:
-  - DBに `cards`（テキスト/メタ/アートURL/カード画像URL/rarity/hand/atk 等）を保存し、`owned_cards` でユーザーと紐付け
-  - 画像ファイル名（GCSのオブジェクトキー）をDBに保持（要件どおり）。配信は署名URL/公開バケット/Cloud CDN等を将来選択
+  - DB（Cloud SQL）に `receipt_uploads` を作成してユーザーと紐づけて **先に保存**（要件どおり）
+- **同期実行（同一HTTPリクエスト内）**:
+  - RailsがGCS上のレシート画像を読み込み → Gemini APIへ送信 → 構造化JSONを受け取る
+  - **攻撃力（20/30/40/50の重み付き）とレアリティ（20=ブロンズ/30=シルバー/40=ゴールド/50=レジェンド）** は不正/再現性の観点から **アプリ側で決定**（LLMには決めさせない）
+  - `cards` / `owned_cards` を作成し、`receipt_uploads` を `completed` に更新（失敗時は `failed` とエラーメッセージを保存）
+- **画像（カード画像）について（MVP割り切り）**:
+  - 本来は「魔法を唱えている感のある正方形画像」を生成したいが、同期で全体を動かす最優先のため、まずは **プレースホルダ画像（固定アセット）** でカード画像生成/表示まで通す
+  - 画像生成は、後で非同期化したタイミングで差し替える（将来: Imagen等）
 - **運用（必須最小）**:
-  - **Secret Manager**: APIキー/サービスアカウント関連の秘匿
-  - **Cloud Logging / Error Reporting**: 失敗原因の可観測性
-  - **レート制限**: ユーザー単位の生成回数制限（コスト爆発と不正対策）
+  - Secret Manager: Gemini APIキー等の秘匿
+  - Cloud Logging / Error Reporting: 失敗原因の可観測性
+  - レート制限: ユーザー単位の生成回数制限（コスト爆発と不正対策）
 
 データフロー（例）:
 ```mermaid
@@ -131,30 +122,18 @@ sequenceDiagram
   participant Web as Browser
   participant Rails as Rails (Cloud Run)
   participant GCS as Cloud Storage
-  participant PS as Pub/Sub
-  participant W as Worker (Cloud Run)
-  participant OCR as Document AI / Vision
-  participant VAI as Vertex AI (Gemini/Imagen)
+  participant GM as Gemini API
   participant DB as Cloud SQL (PostgreSQL)
 
-  Web->>Rails: レシートアップロード開始
-  Rails->>DB: receipt_uploads 作成(status=uploaded)
+  Web->>Rails: レシートアップロード（POST）
+  Rails->>DB: receipt_uploads 作成(status=processing)
   Rails->>GCS: 画像保存（Direct Upload推奨）
-  Rails->>PS: publish(receipt_upload_id)
-  Rails-->>Web: 202 + receipt_upload_id
-
-  PS-->>W: trigger(receipt_upload_id)
-  W->>DB: status=processing
-  W->>GCS: レシート画像取得
-  W->>OCR: OCR実行
-  OCR-->>W: OCR結果（テキスト/構造）
-  W->>VAI: Geminiで items抽出 + テキスト生成(JSON)
-  VAI-->>W: 構造化JSON + 文言
-  W->>VAI: Imagenでアート生成（正方形）
-  VAI-->>W: 生成画像
-  W->>GCS: <env>/artworks/ と <env>/cards/ 保存（合成後）
-  W->>DB: cards/owned_cards 保存 + status=completed
-  Rails-->>Web: ポーリング/通知で結果表示
+  Rails->>GCS: レシート画像取得
+  Rails->>GM: 画像入力で items抽出 + カード文言生成(JSON)
+  GM-->>Rails: 構造化JSON + 文言
+  Rails->>DB: atk/rarity をアプリ側で決定
+  Rails->>DB: cards/owned_cards 保存 + status=completed
+  Rails-->>Web: 200（生成済みカードを表示）
 ```
 
 ## MVPでの責務分割（実装の目安）
@@ -219,19 +198,18 @@ flowchart TB
 - IAM最小権限（Cloud Run → GCS/Vertex/Vision へのアクセス）
 
 ### Phase 2: DB・API（1〜2日）
-- `receipt_uploads`（原本パス/状態/ユーザー/生成結果参照）と `card_generation_jobs`（状態/エラー/再試行）を用意
-- レシートアップロードAPI（作成→保存→ジョブ投入→202返却）
-- ステータス照会API（ポーリングで `queued/running/failed/completed` を返す）
+- `receipt_uploads`（原本パス/状態/ユーザー/生成結果参照）を用意（まずは **同期**で回すのでジョブテーブルは後回しでOK）
+- レシートアップロードAPI（作成→保存→**同期生成**→200返却）
+- 失敗時のハンドリング（`failed` とエラー保存、再試行ボタンは将来）
 
-### Phase 3: OCR + 抽出（1〜3日）
-- Vision AI OCRを組み込み、OCR結果を保存
-- Gemini（Vertex）に **JSONスキーマ固定** で抽出させる（構造化出力、バリデーション）
-- 抽出失敗時のフォールバック（再プロンプト/ルール抽出/人手リトライUIは将来でも可）
+### Phase 3: 抽出 + 生成（Gemini API単独）（1〜3日）
+- Gemini API に **画像（レシート）を入力**して、商品名/金額の抽出（OCR相当）とカード文言生成を **JSONスキーマ固定**で返させる
+- Rails側でJSONをバリデーションし、`receipt_uploads` に監査用の入力/出力（例: `gemini_request`, `gemini_response`）を保存
+- 攻撃力/レアリティは **アプリ側で決定**（確率重み付けもアプリ側）
 
-### Phase 4: アート生成 + 合成（2〜4日）
-- Imagenでアート生成（安全設定、禁止語、画風の統一）
-- 枠テンプレ（rarity×hand）を読み込み、画像合成（テキスト描画含む）で最終カードを生成
-- 生成物（アート/最終カード）をGCSへ保存し、DBに `cards` と `owned_cards` を作成
+### Phase 4: カード画像（MVPはプレースホルダで通す）（0.5〜1日）
+- まずはプレースホルダ画像（固定アセット）を `cards` の表示に使い、全体フローを成立させる
+- 後で画像生成を入れる前提で、画像ファイル名（GCSのオブジェクトキー）をDBに保持する設計だけは先に揃える
 
 ### Phase 5: UI統合（1〜2日）
 - アップロード画面（進捗表示: ポーリング）
@@ -242,4 +220,8 @@ flowchart TB
 - Cloud Logging/Error Reporting、メトリクス（成功率、平均生成時間、1生成あたりコスト）
 - レート制限/不正対策（ユーザーあたり生成回数、同一画像の多重投入防止）
 - プロンプト/モデル更新の管理（A/B、バージョニング、再現性のための入力/出力保存）
+
+### 将来（必要になったら）: 非同期化
+- 同期でのタイムアウト/コスト/UXが問題になった段階で、Pub/Sub + ワーカー（Cloud Run）に分離して非同期化する
+- このとき初めてジョブテーブル（状態/再試行/冪等キー）と、結果ポーリング（または通知）を導入する
 

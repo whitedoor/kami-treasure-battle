@@ -5,6 +5,7 @@
 前提:
 - Docker Desktop が起動していること
 - 開発用Dockerfileは `Dockerfile.dev`（本番用は直下 `Dockerfile`）
+ - 任意: レシートアップロード（GCS）やGemini抽出を使う場合は `.env` を用意（`.env.example` 参照）
 
 ### 起動
 
