@@ -18,6 +18,10 @@ Rails.application.routes.draw do
 
   resources :owned_cards, only: [ :index ]
 
+  resource :battle, only: [ :new, :create, :show, :destroy ] do
+    post :turn, on: :member
+  end
+
   resources :receipts, only: [ :new, :create ]
   resources :receipt_uploads, only: [ :show ] do
     post :generate_card, on: :member

@@ -1,0 +1,52 @@
+<div class="ktb-page" style="place-items: start; padding-top: 22px;">
+  <div style="width: 100%;">
+    <div class="ktb-note" style="max-width: 980px; margin: 0 auto 14px; text-align: left;">
+      <div style="font-weight: 900; font-size: 18px; opacity: 0.95;">CPUバトル（じゃんけん）</div>
+      <div style="opacity: 0.85; margin-top: 6px;">
+        先に、所持カードから <b>グー/チョキ/パーを各1枚</b> 選択して開始します（初期HPは200）。
+      </div>
+    </div>
+
+    <div class="ktb-box" style="max-width: 980px; margin: 0 auto;">
+      <div class="ktb-title">ロードアウト選択</div>
+
+      <%= form_with url: battle_path, method: :post, local: true, data: { turbo: false } do %>
+        <div class="ktb-field">
+          <div class="ktb-label">グー（✊）</div>
+          <select name="loadout[gu_card_id]" class="ktb-input" required>
+            <option value="" selected disabled>選択してください</option>
+            <% @gu_cards.each do |card| %>
+              <option value="<%= card.id %>"><%= card.name %>（攻撃力 <%= card.attack_power %>）</option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="ktb-field">
+          <div class="ktb-label">チョキ（✌️）</div>
+          <select name="loadout[choki_card_id]" class="ktb-input" required>
+            <option value="" selected disabled>選択してください</option>
+            <% @choki_cards.each do |card| %>
+              <option value="<%= card.id %>"><%= card.name %>（攻撃力 <%= card.attack_power %>）</option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="ktb-field">
+          <div class="ktb-label">パー（🖐️）</div>
+          <select name="loadout[pa_card_id]" class="ktb-input" required>
+            <option value="" selected disabled>選択してください</option>
+            <% @pa_cards.each do |card| %>
+              <option value="<%= card.id %>"><%= card.name %>（攻撃力 <%= card.attack_power %>）</option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="ktb-actions">
+          <button type="submit" class="ktb-pill">開始する</button>
+          <%= link_to "保持カードを確認", owned_cards_path, class: "ktb-pill" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
