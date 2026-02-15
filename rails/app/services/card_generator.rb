@@ -49,10 +49,19 @@ class CardGenerator
     forbidden = forbidden_chars_from_items(extracted)
     seed = Zlib.crc32(forbidden.to_a.sort.join)
 
-    # なるべく被りにくい漢字のみで構成（「の」等も使わない）
-    prefixes_all = %w[禁忌 秘奥 冥界 星辰 虚無 残響 黎明 黄昏 幽玄 蒼穹 黒曜 白銀 深淵 紅蓮 翠嵐].freeze
-    cores_all = %w[術式 紋章 契約 詠唱 結界 秘儀 霊符 魔導 刻印 祈祷 祝詞 断章 波紋 残火 霧門].freeze
-    suffixes_all = %w[起動 発動 共鳴 解放 顕現 封印 召喚 変転 転写 増幅].freeze
+    # なるべく被りにくい「カタカナ/英単語」で構成（漢字・ひらがなを使わない）
+    # NOTE: items[*].name と1文字でも被るとNGなので、語彙は短め＆種類多めにして当たりやすくする。
+    prefixes_all = %w[
+      ARCANE SHADOW NEON VOID ASTRAL ECHO NOVA SIGMA ORBIT PHANTOM MIRAGE FROST STORM ONYX IVORY CRIMSON EMERALD
+    ].freeze
+    cores_all = %w[
+      SIGIL ORB RUNE SEAL HEX CHANT AURA GATE CROWN BLADE VEIL NEXUS CORE SPARK WAVE GLYPH
+      シジル オーブ ルーン シール ヘクス オーラ ゲート クラウン ブレード ヴェール ネクサス コア スパーク ウェーブ グリフ
+    ].freeze
+    suffixes_all = %w[
+      BURST AWAKENING RESONANCE UNLEASH SUMMON SHIFT OVERDRIVE AMPLIFY LINK
+      バースト アウェイク レゾナンス アンリーシュ サモン シフト オーバードライブ アンプ リンク
+    ].freeze
     separators = ["・", "：", "／"].freeze # 記号は比較対象外（禁止文字に含めない）
 
     prefixes = prefixes_all.reject { |w| word_forbidden?(w, forbidden) }
@@ -69,7 +78,7 @@ class CardGenerator
     # 最終チェック（1文字でも被ったら別候補を試す）
     return candidate[0, 18] unless shares_any_item_char?(candidate, extracted)
 
-    alt_words = (%w[幽契 影符 星印 霊環 冥律 虚標] + prefixes_all + cores_all).uniq
+    alt_words = (%w[ARC SHD NVX VLT AST ECH NVA SGN ORB RUN] + prefixes_all + cores_all).uniq
     12.times do |i|
       a = pick_deterministic(alt_words, seed: seed, salt: 10 + i)
       b = pick_deterministic(alt_words, seed: seed, salt: 30 + i)
@@ -78,8 +87,9 @@ class CardGenerator
       return attempt[0, 18] unless shares_any_item_char?(attempt, extracted)
     end
 
-    # どうしても無理なら、商品名と被りにくい記号＋漢字1語に逃がす
-    fallback = "◆秘儀◆"
+    # どうしても無理なら、商品名と被りにくい「記号のみ」に逃がす（漢字を含めない）
+    # 記号は比較対象外なので、衝突しづらい最終手段として使う。
+    fallback = "◆◇◆"
     shares_any_item_char?(fallback, extracted) ? "◆◆◆" : fallback
   end
   private_class_method :fantasy_name_avoiding_item_chars

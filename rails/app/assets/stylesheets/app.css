@@ -578,6 +578,11 @@ body {
   margin: 0 -8px; /* reduce side padding so art gets closer to the frame */
 }
 
+/* Mini cards: avoid horizontal bleed in tight grids */
+.ktb-card--mini .ktb-card__art {
+  margin: 0;
+}
+
 /* Square crop (display-level) */
 .ktb-card__artSquare {
   width: 100%;
@@ -586,6 +591,7 @@ body {
   border-radius: 14px;
   overflow: hidden;
   position: relative;
+  box-sizing: border-box;
   background:
     radial-gradient(120% 90% at 25% 15%, rgba(255, 244, 210, 0.38), rgba(0, 0, 0, 0.0) 55%),
     radial-gradient(120% 90% at 80% 90%, rgba(245, 208, 122, 0.22), rgba(0, 0, 0, 0.0) 55%),
@@ -831,6 +837,40 @@ body {
 .ktb-card--mini {
   width: 100%;
   aspect-ratio: 3 / 4;
+}
+
+/* Mini cards (Owned cards list): keep layout stable even with long names */
+.ktb-card--mini .ktb-badge--handTitle,
+.ktb-card--mini .ktb-card__headerSpacer {
+  width: 34px;
+  height: 34px;
+}
+
+.ktb-card--mini .ktb-badge span {
+  font-size: 14px;
+}
+
+.ktb-card--mini .ktb-card__header {
+  grid-template-columns: 34px 1fr 34px;
+  gap: 8px;
+}
+
+.ktb-card--mini .ktb-card__title {
+  font-size: 16px;
+  padding: 5px 7px;
+  border-radius: 9px;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* show up to 2 lines */
+}
+
+.ktb-card--mini .ktb-frame__inner {
+  gap: 10px;
+  padding: 10px;
 }
 
 /* =========================
