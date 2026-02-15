@@ -1,0 +1,30 @@
+<div class="ktb-page" style="max-width: 920px;">
+  <div class="ktb-note">
+    <div style="font-weight: 700; margin-bottom: 8px;">生成されたカード</div>
+    <div style="opacity: 0.9;">
+      <a href="<%= receipt_upload_path(@card.receipt_upload) %>">← ReceiptUpload に戻る</a>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px;">
+    <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+      <div class="ktb-note">
+        <div><b>カード名</b>: <%= @card.name %></div>
+        <div><b>じゃんけん</b>: <%= @card.hand %></div>
+        <div><b>フレーバー</b>: <%= @card.flavor %></div>
+        <div style="margin-top: 8px;">
+          <div><b>攻撃力</b>: <%= @card.attack_power %></div>
+          <div><b>レアリティ</b>: <%= @card.rarity %></div>
+        </div>
+      </div>
+
+      <div class="ktb-note" style="opacity: 0.95;">
+        <div style="font-weight: 700; margin-bottom: 6px;">MVPメモ</div>
+        <div>
+          ここではまだカード画像生成はせず、まずテキスト＋レアリティの保存までを確認します。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

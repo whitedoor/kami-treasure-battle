@@ -1,0 +1,38 @@
+<div class="ktb-page" style="max-width: 920px;">
+  <div class="ktb-note">
+    <div style="font-weight: 700; margin-bottom: 8px;">ReceiptUpload（保存結果）</div>
+    <div style="opacity: 0.9;">
+      <a href="<%= new_receipt_path %>">← アップロード画面に戻る</a>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px;">
+    <div style="font-weight: 700; margin-bottom: 6px;">概要</div>
+    <div class="ktb-note">
+      <div><b>ID</b>: <%= @receipt_upload.id %></div>
+      <div><b>Status</b>: <%= @receipt_upload.status %></div>
+      <div><b>GCS</b>: <code><%= @receipt_upload.gcs_uri %></code></div>
+      <% if @receipt_upload.error_message.present? %>
+        <div style="margin-top: 8px; color: #ffb4b4;"><b>Error</b>: <%= @receipt_upload.error_message %></div>
+      <% end %>
+      <div style="margin-top: 10px;">
+        <% if @receipt_upload.card.present? %>
+          <a href="<%= card_path(@receipt_upload.card) %>">カードを見る（Card #<%= @receipt_upload.card.id %>）</a>
+        <% else %>
+          <%= button_to "このReceiptUploadからカードを生成（アプリ側）", generate_card_receipt_upload_path(@receipt_upload), method: :post, class: "ktb-pill" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 12px;">
+    <div style="font-weight: 700; margin-bottom: 6px;">保存された抽出JSON</div>
+    <pre style="white-space: pre-wrap; word-break: break-word; margin: 0; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);"><%= JSON.pretty_generate(@receipt_upload.extracted_json || {}) %></pre>
+  </div>
+
+  <div style="margin-top: 12px;">
+    <div style="font-weight: 700; margin-bottom: 6px;">raw_text（Geminiの生レスポンス）</div>
+    <pre style="white-space: pre-wrap; word-break: break-word; margin: 0; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);"><%= @receipt_upload.raw_text.to_s %></pre>
+  </div>
+</div>
+

@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["file", "preview", "status", "result", "submit"]
+  static targets = ["file", "preview", "status", "result", "permalink", "submit"]
 
   connect() {
     this.fileTarget.addEventListener("change", () => this.onFileChange())
@@ -11,6 +11,7 @@ export default class extends Controller {
   resetUi() {
     this.setStatus("")
     this.resultTarget.textContent = ""
+    if (this.hasPermalinkTarget) this.permalinkTarget.innerHTML = ""
     this.disableSubmit()
   }
 
@@ -48,6 +49,7 @@ export default class extends Controller {
     this.setStatus("アップロード + 抽出中…（少し時間がかかります）")
     this.resultTarget.textContent = ""
     this.disableSubmit()
+    if (this.hasPermalinkTarget) this.permalinkTarget.innerHTML = ""
 
     const form = new FormData()
     form.append("image", file)
@@ -57,20 +59,30 @@ export default class extends Controller {
       method: "POST",
       headers: csrf ? { "X-CSRF-Token": csrf } : {},
       body: form,
+      credentials: "same-origin",
     })
 
-    const json = await res.json().catch(() => null)
+    const contentType = res.headers.get("content-type") || ""
+    const isJson = contentType.includes("application/json")
+    const payload = isJson ? await res.json().catch(() => null) : await res.text().catch(() => "")
 
     if (!res.ok) {
-      const msg = json?.error || `Upload failed (${res.status})`
+      const msg =
+        payload?.error ||
+        (typeof payload === "string" && payload.trim() ? payload.slice(0, 300) : null) ||
+        `Upload failed (${res.status})`
       this.setStatus(`失敗: ${msg}`)
-      this.resultTarget.textContent = JSON.stringify(json, null, 2)
+      this.resultTarget.textContent = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2)
       this.enableSubmit()
       return
     }
 
     this.setStatus("完了（抽出結果を表示しました）")
-    this.resultTarget.textContent = JSON.stringify(json, null, 2)
+    this.resultTarget.textContent = JSON.stringify(payload, null, 2)
+    if (this.hasPermalinkTarget && payload?.receipt_upload_id) {
+      const id = payload.receipt_upload_id
+      this.permalinkTarget.innerHTML = `<a href="/receipt_uploads/${id}">保存結果を見る（ReceiptUpload #${id}）</a>`
+    }
     this.enableSubmit()
   }
 

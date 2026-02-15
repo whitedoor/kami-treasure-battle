@@ -13,4 +13,8 @@ Rails.application.routes.draw do
   root "home#index"
 
   resources :receipts, only: [ :new, :create ]
+  resources :receipt_uploads, only: [ :show ] do
+    post :generate_card, on: :member
+  end
+  resources :cards, only: [ :show ]
 end
