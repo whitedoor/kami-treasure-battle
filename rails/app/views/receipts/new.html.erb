@@ -1,58 +1,302 @@
-<div class="ktb-page">
-  <div class="ktb-note" style="max-width: 720px;">
-    <div style="font-weight: 700; margin-bottom: 8px;">レシート撮影 → GCSアップロード（開発検証）</div>
-    <div style="opacity: 0.9;">
-      モバイルでは「カメラ起動」になります（<code>capture</code>）。PCでは画像ファイル選択になります。
+<% content_for :title, "エネルギー抽出" %>
+
+<% content_for :head do %>
+  <style>
+    .ktb-receiptNew {
+      place-items: start center;
+      padding-top: 28px;
+    }
+
+    .ktb-receiptNew__wrap {
+      width: min(980px, 92vw);
+      display: grid;
+      gap: 16px;
+      margin: 0 auto;
+    }
+
+    .ktb-receiptNew__hero {
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow:
+        0 28px 64px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.08) inset;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ktb-receiptNew__heroImg {
+      width: 100%;
+      height: min(260px, 40vw);
+      max-height: 320px;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    .ktb-receiptNew__box {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .ktb-receiptNew__lead {
+      margin: -4px auto 0;
+      max-width: 64ch;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.7;
+      opacity: 0.82;
+    }
+
+    .ktb-receiptNew__autoFlow {
+      margin: 10px auto 0;
+      max-width: 72ch;
+      display: grid;
+      gap: 8px;
+      place-items: center;
+      text-align: center;
+    }
+
+    .ktb-receiptNew__autoFlowText {
+      font-size: 12px;
+      line-height: 1.7;
+      opacity: 0.88;
+    }
+
+    .ktb-receiptNew__file {
+      display: none;
+    }
+
+    .ktb-receiptNew__pill {
+      cursor: pointer;
+      user-select: none;
+      min-width: 128px;
+    }
+
+    .ktb-receiptNew__pill--primary {
+      /* 同じ色（ktb-pillの見た目）に揃える */
+      background: inherit;
+      border-color: inherit;
+      color: inherit;
+      text-shadow: none;
+      text-decoration: none;
+    }
+
+    .ktb-receiptNew__pill--primary:hover {
+      filter: none;
+    }
+
+    .ktb-receiptNew__pill--primary:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
+    }
+
+    .ktb-receiptNew__filename {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.78;
+      word-break: break-word;
+    }
+
+    .ktb-receiptNew__status {
+      margin-top: 12px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      min-height: 18px;
+      font-size: 13px;
+      line-height: 1.6;
+      opacity: 0.92;
+    }
+
+    .ktb-receiptNew__previewWrap {
+      margin-top: 12px;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.18);
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      padding: 10px;
+    }
+
+    .ktb-receiptNew__preview {
+      display: none;
+      width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      border-radius: 12px;
+    }
+
+    .ktb-receiptNew__result {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .ktb-receiptNew__summaryCard {
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .ktb-receiptNew__summaryTitle {
+      font-weight: 900;
+      margin: 0 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      opacity: 0.92;
+    }
+
+    .ktb-receiptNew__kv {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 8px 10px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .ktb-receiptNew__k {
+      opacity: 0.72;
+      font-weight: 800;
+    }
+
+    .ktb-receiptNew__v {
+      opacity: 0.92;
+      word-break: break-word;
+    }
+
+    .ktb-receiptNew__items {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      opacity: 0.9;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .ktb-receiptNew__details {
+      margin-top: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(0, 0, 0, 0.14);
+      overflow: hidden;
+    }
+
+    .ktb-receiptNew__details summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      font-weight: 900;
+      font-size: 13px;
+      opacity: 0.9;
+      list-style: none;
+    }
+
+    .ktb-receiptNew__details summary::-webkit-details-marker { display: none; }
+
+    .ktb-receiptNew__raw {
+      margin: 0;
+      padding: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      line-height: 1.55;
+      opacity: 0.92;
+    }
+
+    .ktb-receiptNew__help {
+      margin-top: 10px;
+      opacity: 0.9;
+    }
+
+    .ktb-receiptNew__help summary {
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 13px;
+      list-style: none;
+      text-align: center;
+      opacity: 0.86;
+    }
+
+    .ktb-receiptNew__help summary::-webkit-details-marker { display: none; }
+  </style>
+<% end %>
+
+<div class="ktb-page ktb-receiptNew">
+  <div class="ktb-receiptNew__wrap">
+    <div class="ktb-receiptNew__hero" aria-label="トップビジュアル">
+      <%= image_tag(
+            create_hero_image_path,
+            alt: "カード錬成のトップビジュアル",
+            class: "ktb-receiptNew__heroImg",
+            loading: "lazy",
+            decoding: "async"
+          ) %>
     </div>
-    <div style="opacity: 0.9; margin-top: 6px;">
-      画像アップロード後に Gemini API で抽出します（サーバ側に <code>GEMINI_API_KEY</code> の設定が必要）。
-    </div>
-  </div>
 
-  <div
-    data-controller="receipt-upload"
-    style="max-width: 720px; width: 100%; margin-top: 16px;"
-  >
-    <label class="ktb-pill" style="display: inline-block; cursor: pointer;">
-      写真を選ぶ / 撮る
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        data-receipt-upload-target="file"
-        style="display:none;"
-      >
-    </label>
+    <div class="ktb-box ktb-receiptNew__box" data-controller="receipt-upload">
+      <h1 class="ktb-title">レシートからカード錬成</h1>
+      <p class="ktb-receiptNew__lead">
+        レシート写真をアップロードして、カード錬成に必要なエネルギーを抽出しよう！<br>
+        レアリティは、ブロンズ、シルバー、ゴールド、レジェンドの４種類！
+      </p>
+      <div class="ktb-receiptNew__autoFlow" aria-label="自動遷移の案内">
+        <span class="ktb-pill" aria-disabled="true" style="opacity: 0.75; cursor: default;">
+          抽出完了後は自動で次へ進みます（操作不要）
+        </span>
+        <div class="ktb-receiptNew__autoFlowText">
+          エネルギー抽出が完了するとカード錬成を開始し、完了後に自動でカード画面へ移動します。ページは閉じずにお待ちください。
+        </div>
+      </div>
 
-    <button
-      type="button"
-      class="ktb-pill"
-      data-receipt-upload-target="submit"
-      data-action="click->receipt-upload#submit"
-      disabled
-      style="margin-left: 8px;"
-    >
-      アップロード開始
-    </button>
+      <div class="ktb-actions" aria-label="写真の選択">
+        <label class="ktb-pill ktb-receiptNew__pill">
+          撮影する（スマホのみ）
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            data-receipt-upload-target="file"
+            class="ktb-receiptNew__file"
+          >
+        </label>
 
-    <div data-receipt-upload-target="status" style="margin-top: 12px;"></div>
+        <label class="ktb-pill ktb-receiptNew__pill">
+          画像を選ぶ
+          <input
+            type="file"
+            accept="image/*"
+            data-receipt-upload-target="file"
+            class="ktb-receiptNew__file"
+          >
+        </label>
 
-    <div style="margin-top: 12px;">
-      <div style="font-weight: 700; margin-bottom: 6px;">プレビュー</div>
-      <img
-        data-receipt-upload-target="preview"
-        alt="preview"
-        style="display:none; width: 100%; max-height: 420px; object-fit: contain; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);"
-      >
-    </div>
+        <button
+          type="button"
+          class="ktb-pill ktb-receiptNew__pill ktb-receiptNew__pill--primary"
+          data-receipt-upload-target="submit"
+          data-action="click->receipt-upload#primaryAction"
+          disabled
+          style="display:none;"
+        >
+          エネルギー抽出
+        </button>
+      </div>
 
-    <div style="margin-top: 12px;">
-      <div style="font-weight: 700; margin-bottom: 6px;">アップロード結果</div>
-      <pre
-        data-receipt-upload-target="result"
-        style="white-space: pre-wrap; word-break: break-word; margin: 0; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);"
-      ></pre>
-      <div data-receipt-upload-target="permalink" style="margin-top: 8px;"></div>
+      <div class="ktb-receiptNew__filename" data-receipt-upload-target="fileName" aria-live="polite"></div>
+      <div class="ktb-receiptNew__status" data-receipt-upload-target="status" aria-live="polite"></div>
+
+      <div class="ktb-receiptNew__previewWrap" aria-label="プレビュー">
+        <img
+          data-receipt-upload-target="preview"
+          alt="レシートプレビュー"
+          class="ktb-receiptNew__preview"
+        >
+      </div>
+
+      <div class="ktb-receiptNew__result" data-receipt-upload-target="result" aria-label="抽出結果"></div>
+      <div class="ktb-actions" data-receipt-upload-target="permalink" aria-label="次へ"></div>
+
     </div>
   </div>
 </div>

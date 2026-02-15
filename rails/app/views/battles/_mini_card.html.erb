@@ -1,0 +1,65 @@
+<% if card.nil? %>
+  <div class="ktb-battleLoadouts__empty">カードが見つかりません</div>
+<% else %>
+  <% is_starter_card = (card.rarity == "normal") %>
+  <% frame_theme =
+       if is_starter_card
+         case card.hand
+         when "gu" then "starter-gu"
+         when "choki" then "starter-choki"
+         when "pa" then "starter-pa"
+         else "starter"
+         end
+       else
+         case card.rarity
+         when "bronze", "silver", "gold", "legend" then card.rarity
+         else "normal"
+         end
+       end %>
+
+  <% title_len = card.name.to_s.length %>
+  <% title_size_class =
+       if title_len >= 18
+         "ktb-card--titleXS"
+       elsif title_len >= 14
+         "ktb-card--titleS"
+       else
+         "ktb-card--titleM"
+       end %>
+
+  <div class="ktb-card ktb-card--mini ktb-card--battleMini <%= title_size_class %>" aria-label="カード">
+    <div class="ktb-frame ktb-frame--ornate ktb-frame--<%= frame_theme %>">
+      <div class="ktb-frame__inner">
+        <% hand_emoji = (card.hand == "gu" ? "✊" : (card.hand == "choki" ? "✌️" : "🖐️")) %>
+        <% hand_label = (card.hand == "gu" ? "グー" : (card.hand == "choki" ? "チョキ" : "パー")) %>
+
+        <div class="ktb-card__header" aria-label="カード名とタイプ">
+          <div class="ktb-badge ktb-badge--handTitle" aria-label="<%= hand_label %>" title="<%= hand_label %>">
+            <span><%= hand_emoji %></span>
+          </div>
+          <div class="ktb-card__title"><%= card.name %></div>
+          <div class="ktb-card__headerSpacer" aria-hidden="true"></div>
+        </div>
+
+        <div class="ktb-card__art">
+          <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
+            <img
+              src="<%= image_card_path(card, v: (card.artwork_generation || card.updated_at.to_i)) %>"
+              alt="card image"
+              class="ktb-card__artImage"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+        </div>
+
+        <div class="ktb-card__footer">
+          <div class="ktb-card__attack" aria-label="攻撃力">
+            攻撃力 <span class="ktb-card__attackValue"><%= card.attack_power %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+

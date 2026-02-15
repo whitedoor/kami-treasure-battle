@@ -36,6 +36,9 @@ class VertexImagenGenerator
       language: "ja",
       personGeneration: "dont_allow",
       safetySetting: "block_medium_and_above",
+      # Avoid prompt rewriting that may introduce unintended text elements.
+      # Also needed for deterministic seed behavior.
+      enhancePrompt: false,
       outputOptions: { mimeType: mime_type },
       # allow deterministic seed: watermark must be false
       addWatermark: false

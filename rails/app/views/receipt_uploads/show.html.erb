@@ -1,38 +1,225 @@
-<div class="ktb-page" style="max-width: 920px;">
-  <div class="ktb-note">
-    <div style="font-weight: 700; margin-bottom: 8px;">ReceiptUpload（保存結果）</div>
-    <div style="opacity: 0.9;">
-      <a href="<%= new_receipt_path %>">← アップロード画面に戻る</a>
-    </div>
-  </div>
+<% content_for :title, "カード錬成" %>
 
-  <div style="margin-top: 16px;">
-    <div style="font-weight: 700; margin-bottom: 6px;">概要</div>
-    <div class="ktb-note">
-      <div><b>ID</b>: <%= @receipt_upload.id %></div>
-      <div><b>Status</b>: <%= @receipt_upload.status %></div>
-      <div><b>GCS</b>: <code><%= @receipt_upload.gcs_uri %></code></div>
-      <% if @receipt_upload.error_message.present? %>
-        <div style="margin-top: 8px; color: #ffb4b4;"><b>Error</b>: <%= @receipt_upload.error_message %></div>
-      <% end %>
-      <div style="margin-top: 10px;">
+<% content_for :head do %>
+  <style>
+    .ktb-receiptShow {
+      place-items: start center;
+      padding-top: 28px;
+    }
+
+    .ktb-receiptShow__wrap {
+      width: min(980px, 92vw);
+      display: grid;
+      gap: 16px;
+      margin: 0 auto;
+    }
+
+    .ktb-receiptShow__hero {
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow:
+        0 28px 64px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.08) inset;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ktb-receiptShow__heroImg {
+      width: 100%;
+      height: min(220px, 36vw);
+      max-height: 300px;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    .ktb-receiptShow__box {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .ktb-receiptShow__lead {
+      margin: -4px auto 0;
+      max-width: 64ch;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.7;
+      opacity: 0.82;
+    }
+
+    .ktb-receiptShow__result {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .ktb-receiptShow__card {
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .ktb-receiptShow__cardTitle {
+      font-weight: 900;
+      margin: 0 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      opacity: 0.92;
+    }
+
+    .ktb-receiptShow__kv {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 8px 10px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .ktb-receiptShow__k {
+      opacity: 0.72;
+      font-weight: 800;
+    }
+
+    .ktb-receiptShow__v {
+      opacity: 0.92;
+      word-break: break-word;
+    }
+
+    .ktb-receiptShow__items {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      opacity: 0.9;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .ktb-receiptShow__error {
+      color: #ffb4b4;
+      opacity: 0.95;
+      font-weight: 800;
+    }
+  </style>
+<% end %>
+
+<% extracted = @receipt_upload.extracted_json.is_a?(Hash) ? @receipt_upload.extracted_json : {} %>
+<% card = extracted["card"].is_a?(Hash) ? extracted["card"] : {} %>
+<% items = extracted["items"].is_a?(Array) ? extracted["items"] : [] %>
+<% notes = extracted["notes"].to_s %>
+
+<% hand =
+     case card["hand"].to_s
+     when "gu" then "グー"
+     when "choki" then "チョキ"
+     when "pa" then "パー"
+     else ""
+     end %>
+
+<div class="ktb-page ktb-receiptShow">
+  <div class="ktb-receiptShow__wrap">
+    <div class="ktb-receiptShow__hero" aria-label="トップビジュアル">
+      <%= image_tag(
+            create_hero_image_path,
+            alt: "カード錬成のトップビジュアル",
+            class: "ktb-receiptShow__heroImg",
+            loading: "lazy",
+            decoding: "async"
+          ) %>
+    </div>
+
+    <div class="ktb-box ktb-receiptShow__box">
+      <h1 class="ktb-title">カード錬成</h1>
+      <p class="ktb-receiptShow__lead">
+        エネルギー抽出の結果を確認して、カードを錬成しましょう！<br>
+        うまくいかなかった場合は、もう一度試せます。
+      </p>
+
+      <div class="ktb-actions" style="margin-top: 10px;">
+
         <% if @receipt_upload.card.present? %>
-          <a href="<%= card_path(@receipt_upload.card) %>">カードを見る（Card #<%= @receipt_upload.card.id %>）</a>
+          <%= link_to "カードを見る", card_path(@receipt_upload.card), class: "ktb-pill" %>
+        <% elsif @receipt_upload.extracted? %>
+          <%= button_to "カードを錬成する",
+                        generate_card_receipt_upload_path(@receipt_upload),
+                        method: :post,
+                        class: "ktb-pill",
+                        data: { turbo_submits_with: "錬成中…" } %>
         <% else %>
-          <%= button_to "このReceiptUploadからカードを生成（アプリ側）", generate_card_receipt_upload_path(@receipt_upload), method: :post, class: "ktb-pill" %>
+          <span class="ktb-pill" aria-disabled="true" style="opacity: 0.65; cursor: not-allowed;">抽出中…</span>
+        <% end %>
+      </div>
+
+      <div class="ktb-receiptShow__result" aria-label="結果の要約">
+        <div class="ktb-receiptShow__card">
+          <div class="ktb-receiptShow__cardTitle">ステータス</div>
+          <div class="ktb-receiptShow__kv">
+            <div class="ktb-receiptShow__k">状態</div>
+            <div class="ktb-receiptShow__v">
+              <% if @receipt_upload.failed? %>
+                失敗
+              <% elsif @receipt_upload.extracted? %>
+                抽出完了
+              <% else %>
+                処理中
+              <% end %>
+            </div>
+
+            <% if @receipt_upload.error_message.present? %>
+              <div class="ktb-receiptShow__k">エラー</div>
+              <div class="ktb-receiptShow__v ktb-receiptShow__error"><%= @receipt_upload.error_message %></div>
+            <% end %>
+          </div>
+        </div>
+
+        <% if @receipt_upload.extracted? %>
+          <div class="ktb-receiptShow__card">
+            <div class="ktb-receiptShow__cardTitle">カード案</div>
+            <div class="ktb-receiptShow__kv">
+              <div class="ktb-receiptShow__k">名前</div>
+              <div class="ktb-receiptShow__v"><%= card["name"].to_s.presence || "（未設定）" %></div>
+
+              <div class="ktb-receiptShow__k">手</div>
+              <div class="ktb-receiptShow__v"><%= hand.presence || "（未設定）" %></div>
+
+              <div class="ktb-receiptShow__k">フレーバー</div>
+              <div class="ktb-receiptShow__v"><%= card["flavor"].to_s.presence || "（未設定）" %></div>
+            </div>
+          </div>
+
+          <div class="ktb-receiptShow__card">
+            <div class="ktb-receiptShow__cardTitle">抽出アイテム</div>
+            <% if items.any? %>
+              <ol class="ktb-receiptShow__items">
+                <% items.first(8).each do |it| %>
+                  <% name = it.is_a?(Hash) ? it["name"].to_s : it.to_s %>
+                  <% price = it.is_a?(Hash) ? it["price_yen"] : nil %>
+                  <li>
+                    <%= name.presence || "（名称不明）" %>
+                    <% if price.present? %>
+                      <span style="opacity:0.78;">（<%= number_to_currency(price.to_i, unit: "¥", precision: 0, format: "%u%n") %>）</span>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ol>
+              <% if items.length > 8 %>
+                <div style="margin-top: 6px; font-size: 12px; opacity: 0.72;">ほか <%= items.length - 8 %> 件</div>
+              <% end %>
+            <% else %>
+              <div style="font-size: 13px; opacity: 0.86;">アイテムが見つかりませんでした。</div>
+            <% end %>
+          </div>
+
+          <% if notes.present? %>
+            <div class="ktb-receiptShow__card">
+              <div class="ktb-receiptShow__cardTitle">補足</div>
+              <div style="font-size: 13px; line-height: 1.7; opacity: 0.9;"><%= notes %></div>
+            </div>
+          <% end %>
         <% end %>
       </div>
     </div>
-  </div>
-
-  <div style="margin-top: 12px;">
-    <div style="font-weight: 700; margin-bottom: 6px;">保存された抽出JSON</div>
-    <pre style="white-space: pre-wrap; word-break: break-word; margin: 0; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);"><%= JSON.pretty_generate(@receipt_upload.extracted_json || {}) %></pre>
-  </div>
-
-  <div style="margin-top: 12px;">
-    <div style="font-weight: 700; margin-bottom: 6px;">raw_text（Geminiの生レスポンス）</div>
-    <pre style="white-space: pre-wrap; word-break: break-word; margin: 0; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);"><%= @receipt_upload.raw_text.to_s %></pre>
   </div>
 </div>
 

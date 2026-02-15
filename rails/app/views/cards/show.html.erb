@@ -1,25 +1,21 @@
-<div class="ktb-page">
+<div
+  class="ktb-page"
+  data-controller="card-artwork"
+  data-card-artwork-card-id-value="<%= @card.id %>"
+  data-card-artwork-status-value="<%= @card.artwork_status %>"
+  data-card-artwork-generate-url-value="<%= generate_artwork_card_path(@card, format: :json) %>"
+  data-card-artwork-poll-url-value="<%= card_path(@card, format: :json) %>"
+>
   <div>
-    <div class="ktb-note" style="margin-bottom: 12px;">
-      <a href="<%= receipt_upload_path(@card.receipt_upload) %>" class="ktb-pill">← ReceiptUpload に戻る</a>
-    </div>
 
     <div class="ktb-note" style="margin-bottom: 12px;">
-      <div style="font-weight: 800; margin-bottom: 6px;">生成AI画像（Imagen）</div>
       <div style="opacity: 0.9;">
-        状態: <b><%= @card.artwork_status %></b>
-        <% if @card.artwork_error.present? %>
-          <span style="color: #ffb4b4;">（<%= @card.artwork_error %>）</span>
-        <% end %>
-      </div>
-      <div style="margin-top: 10px;">
-        <% if @card.artwork_status == "generated" %>
-          <span class="ktb-pill" aria-disabled="true">生成済み</span>
-        <% elsif @card.artwork_status == "generating" %>
-          <span class="ktb-pill" aria-disabled="true">生成中…</span>
-        <% else %>
-          <%= button_to "生成AIで画像を生成する", generate_artwork_card_path(@card), method: :post, class: "ktb-pill" %>
-        <% end %>
+        <span
+          data-card-artwork-target="errorText"
+          style="color: #ffb4b4; display: <%= @card.artwork_error.present? ? 'inline' : 'none' %>;"
+        >
+          （<%= @card.artwork_error %>）
+        </span>
       </div>
     </div>
 
@@ -53,10 +49,27 @@
 
           <div class="ktb-card__art">
             <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
+              <% refining = %w[pending generating].include?(@card.artwork_status) %>
+              <div
+                class="ktb-card__artSkeleton"
+                style="display: <%= refining ? '' : 'none' %>;"
+                data-card-artwork-target="skeleton"
+                role="status"
+                aria-label="カード画像を錬成中"
+                aria-live="polite"
+              >
+                <div class="ktb-card__artSkeleton__content">
+                  <div class="ktb-card__artSkeleton__glyph" aria-hidden="true">✦</div>
+                  <div class="ktb-card__artSkeleton__text">錬成中…</div>
+                  <div class="ktb-card__artSkeleton__subtext">まもなくカード画像が完成します</div>
+                </div>
+              </div>
               <img
-                src="<%= image_card_path(@card) %>"
+                src="<%= image_card_path(@card, v: (@card.artwork_generation || @card.updated_at.to_i)) %>"
                 alt="card image"
                 class="ktb-card__artImage"
+                data-card-artwork-target="image"
+                style="display: <%= refining ? 'none' : '' %>;"
                 loading="lazy"
                 decoding="async"
               >
@@ -69,14 +82,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="ktb-note">
-      <div><b>フレーバー</b>: <%= @card.flavor %></div>
-      <div><b>レアリティ</b>: <%= @card.rarity %></div>
-      <div style="margin-top: 8px; opacity: 0.95;">
-        画像は <code><%= image_card_path(@card) %></code> で表示しています（生成済みならGCSから取得）。
       </div>
     </div>
   </div>

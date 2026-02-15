@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "home#index"
   get "/top-hero.png", to: "home#top_hero_image", as: :top_hero_image
+  get "/create-hero.png", to: "home#create_hero_image", as: :create_hero_image
 
   resources :users, only: [ :new, :create ]
   resources :sessions, only: [ :new, :create ]

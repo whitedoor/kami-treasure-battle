@@ -228,10 +228,9 @@
     </div>
 
     <div class="ktb-receipt" role="region" aria-label="レシートトレジャーバトル">
-      <div class="ktb-receipt__stamp">KTB // RECEIPT LOOT // BATTLE READY</div>
       <h1 class="ktb-receipt__title">レシートトレジャーバトル！！</h1>
       <p class="ktb-receipt__lead">
-        レシートを撮るだけで、戦利品がカードになる。集めて、強化して、バトルで奪い合え。
+        そのレシートが、世界を変える。集めて、撮影して、バトル！！
       </p>
 
       <div class="ktb-receipt__line"></div>
@@ -239,18 +238,18 @@
       <div class="ktb-receipt__steps" aria-label="遊び方">
         <div class="ktb-step">
           <div class="ktb-step__kicker">STEP 01</div>
-          <div class="ktb-step__title">レシート撮影</div>
-          <div class="ktb-step__body">買い物の記録が、そのまま戦利品のタネ。</div>
+          <div class="ktb-step__title">お買い物</div>
+          <div class="ktb-step__body">レシートは忘れずにね！</div>
         </div>
         <div class="ktb-step">
           <div class="ktb-step__kicker">STEP 02</div>
-          <div class="ktb-step__title">カード生成</div>
-          <div class="ktb-step__body">品目が「宝」に変換されて、キラッとカード化。</div>
+          <div class="ktb-step__title">カード錬成</div>
+          <div class="ktb-step__body">レシートがカードになるよ！レアカードになる可能性も？！</div>
         </div>
         <div class="ktb-step">
           <div class="ktb-step__kicker">STEP 03</div>
-          <div class="ktb-step__title">トレジャーバトル</div>
-          <div class="ktb-step__body">読み合いと運で勝ち抜け。勝者は戦利品を持ち帰る。</div>
+          <div class="ktb-step__title">バトル（じゃんけん）</div>
+          <div class="ktb-step__body">読み合いと運で勝ち抜こう！（CPU対戦のみ）</div>
         </div>
       </div>
 
@@ -266,26 +265,7 @@
           <%= link_to "ログイン", new_session_path, class: "ktb-pill" %>
         <% end %>
       </div>
-
-      <div class="ktb-receipt__fine" aria-label="補足">
-        <div class="ktb-receipt__fineRow"><span>MODE</span><span>ALPHA</span></div>
-        <div class="ktb-receipt__fineRow"><span>HINT</span><span>強いレア度ほど、フレームが豪華。</span></div>
-      </div>
     </div>
-
-    <details class="ktb-home__dev">
-      <summary>開発メモ（表示トリミングなど）</summary>
-      <div class="ktb-home__devBody">
-        <div class="ktb-note">
-          画像の「正方形トリミング」はCSS（<code>object-fit: cover</code>）で表示上の切り抜きをしています。
-          もし「ファイルとして」正方形PNGを生成したければ、別途タスク（ImageMagick/ActiveStorage variant等）で対応できます。
-        </div>
-
-        <div class="ktb-note" style="margin-top: 10px;">
-          <%= link_to "レシート撮影→GCSアップロード（開発）", new_receipt_path, class: "ktb-pill" %>
-        </div>
-      </div>
-    </details>
   </div>
 </div>
 

@@ -1,32 +1,99 @@
 <div class="ktb-page" style="place-items: start; padding-top: 22px;">
   <div style="width: 100%;">
-    <div class="ktb-note" style="max-width: 980px; margin: 0 auto 14px; text-align: left;">
+    <div class="ktb-note" style="max-width: none; width: 100%; margin: 0 0 14px; text-align: left;">
       <div style="font-weight: 900; font-size: 18px; opacity: 0.95;">CPUバトル（じゃんけん）</div>
       <div style="opacity: 0.85; margin-top: 6px;">
         勝った側が攻撃（カードの攻撃力分）。あいこは両者 <b><%= @battle_state[:tie_damage] %></b> ダメージ。
       </div>
     </div>
 
-    <div class="ktb-box" style="max-width: 980px; margin: 0 auto;">
+    <div class="ktb-box" style="max-width: none; width: 100%; margin: 0;">
       <div class="ktb-title">バトル状況</div>
 
       <div style="display: grid; gap: 10px;">
-        <div style="display:flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-          <div>
-            <b>あなた</b>: HP <b><%= @battle_state[:player_hp] %></b> / <%= @battle_state[:initial_hp] %>
-          </div>
-          <div>
-            <b>CPU</b>: HP <b><%= @battle_state[:cpu_hp] %></b> / <%= @battle_state[:initial_hp] %>
+        <% last_turn = @battle_state[:turns]&.last %>
+
+        <% initial_hp = @battle_state[:initial_hp].to_i %>
+        <% player_hp = @battle_state[:player_hp].to_i %>
+        <% cpu_hp = @battle_state[:cpu_hp].to_i %>
+
+        <% hand_label = { "gu" => "グー", "choki" => "チョキ", "pa" => "パー" } %>
+        <% hand_emoji = { "gu" => "✊", "choki" => "✌️", "pa" => "🖐️" } %>
+        <% outcome_label = { "player" => "あなたの勝ち", "cpu" => "CPUの勝ち", "tie" => "あいこ" } %>
+        <% winner_label = { "player" => "あなた", "cpu" => "CPU", "draw" => "引き分け" } %>
+
+        <% player_pct = initial_hp.positive? ? ((player_hp.to_f / initial_hp) * 100).round : 0 %>
+        <% cpu_pct = initial_hp.positive? ? ((cpu_hp.to_f / initial_hp) * 100).round : 0 %>
+        <% player_pct = [[player_pct, 0].max, 100].min %>
+        <% cpu_pct = [[cpu_pct, 0].max, 100].min %>
+
+        <% player_tier = player_pct >= 60 ? "high" : (player_pct >= 30 ? "mid" : "low") %>
+        <% cpu_tier = cpu_pct >= 60 ? "high" : (cpu_pct >= 30 ? "mid" : "low") %>
+
+        <div
+          class="ktb-battle"
+          data-controller="battle-effect"
+          data-battle-effect-outcome-value="<%= last_turn&.dig(:outcome).to_s %>"
+          data-battle-effect-player-damage-value="<%= last_turn&.dig(:player_damage).to_i %>"
+          data-battle-effect-cpu-damage-value="<%= last_turn&.dig(:cpu_damage).to_i %>"
+          data-battle-effect-ended-value="<%= !!@battle_state[:ended] %>"
+          data-battle-effect-winner-value="<%= @battle_state[:winner].to_s %>"
+        >
+          <div class="ktb-battleBanner" data-battle-effect-target="banner" aria-live="polite"></div>
+          <div class="ktb-battleEndBanner" data-battle-effect-target="endBanner" aria-live="polite"></div>
+
+          <div class="ktb-hpGrid">
+            <div class="ktb-hpSide ktb-hpSide--player" data-battle-effect-target="playerSide">
+              <div class="ktb-hpTop">
+                <div class="ktb-hpName"><b>あなた</b></div>
+                <div class="ktb-hpNumbers">HP <b><%= player_hp %></b> / <%= initial_hp %></div>
+              </div>
+              <div class="ktb-hpBar ktb-hpBar--<%= player_tier %>" style="--ktb-hp-pct: <%= player_pct %>%;">
+                <div class="ktb-hpFill"></div>
+              </div>
+            </div>
+
+            <div class="ktb-hpSide ktb-hpSide--cpu" data-battle-effect-target="cpuSide">
+              <div class="ktb-hpTop">
+                <div class="ktb-hpName"><b>CPU</b></div>
+                <div class="ktb-hpNumbers">HP <b><%= cpu_hp %></b> / <%= initial_hp %></div>
+              </div>
+              <div class="ktb-hpBar ktb-hpBar--<%= cpu_tier %>" style="--ktb-hp-pct: <%= cpu_pct %>%;">
+                <div class="ktb-hpFill"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <% last_turn = @battle_state[:turns]&.last %>
+        <div class="ktb-battleLoadouts" aria-label="ロードアウト（選択カード）">
+          <% hands = %w[gu choki pa] %>
+
+          <div class="ktb-battleLoadouts__col" aria-label="あなたのロードアウト">
+            <div class="ktb-battleLoadouts__title">あなたのロードアウト</div>
+            <div class="ktb-battleLoadouts__grid">
+              <% hands.each do |hand| %>
+                <%= render partial: "mini_card", locals: { card: @player_cards[hand] } %>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="ktb-battleLoadouts__col" aria-label="CPUのロードアウト">
+            <div class="ktb-battleLoadouts__title">CPUのロードアウト</div>
+            <div class="ktb-battleLoadouts__grid">
+              <% hands.each do |hand| %>
+                <%= render partial: "mini_card", locals: { card: @cpu_cards[hand] } %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
         <% if last_turn.present? %>
           <div class="ktb-note" style="max-width: 980px; margin: 0; text-align: left; opacity: 0.9;">
             <div style="font-weight: 900; opacity: 0.95;">直前ターン</div>
             <div style="margin-top: 6px;">
-              あなた: <b><%= last_turn[:player_hand] %></b> / CPU: <b><%= last_turn[:cpu_hand] %></b> /
-              結果: <b><%= last_turn[:outcome] %></b>
+              あなた: <b><%= hand_emoji[last_turn[:player_hand].to_s] %> <%= hand_label[last_turn[:player_hand].to_s] || last_turn[:player_hand] %></b> /
+              CPU: <b><%= hand_emoji[last_turn[:cpu_hand].to_s] %> <%= hand_label[last_turn[:cpu_hand].to_s] || last_turn[:cpu_hand] %></b> /
+              結果: <b><%= outcome_label[last_turn[:outcome].to_s] || last_turn[:outcome] %></b>
             </div>
             <div style="margin-top: 4px;">
               あなた被ダメ: <b><%= last_turn[:player_damage] %></b> / CPU被ダメ: <b><%= last_turn[:cpu_damage] %></b>
@@ -38,12 +105,11 @@
           <div class="ktb-note" style="max-width: 980px; margin: 0; text-align: left; opacity: 0.95;">
             <div style="font-weight: 900;">決着</div>
             <div style="margin-top: 6px;">
-              勝者: <b><%= @battle_state[:winner] %></b>
+              勝者: <b><%= winner_label[@battle_state[:winner].to_s] || @battle_state[:winner] %></b>
             </div>
           </div>
 
           <div class="ktb-actions" style="justify-content: flex-start;">
-            <%= button_to "もう一度（リセット）", battle_path, method: :delete, class: "ktb-pill", form: { style: "display:inline;", data: { turbo: false } } %>
             <%= link_to "ロードアウトを選び直す", new_battle_path, class: "ktb-pill" %>
           </div>
         <% else %>

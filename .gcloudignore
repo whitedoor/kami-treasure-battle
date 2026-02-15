@@ -16,8 +16,5 @@
 **/.bundle/**
 **/node_modules/**
 
-# Large local-only assets
-png/**
-
 # Docs are not needed for building the image
 docs/**

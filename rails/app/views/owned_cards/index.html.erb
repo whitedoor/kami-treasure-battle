@@ -47,7 +47,7 @@
                   <div class="ktb-card__art">
                     <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
                       <img
-                        src="<%= image_card_path(card) %>"
+                        src="<%= image_card_path(card, v: (card.artwork_generation || card.updated_at.to_i)) %>"
                         alt="card image"
                         class="ktb-card__artImage"
                         loading="lazy"

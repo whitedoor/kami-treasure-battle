@@ -1,5 +1,6 @@
 require "fileutils"
 require "vips"
+require "tmpdir"
 
 class CardImageGenerator
   class Error < StandardError; end
@@ -11,7 +12,8 @@ class CardImageGenerator
   def self.generate!(card)
     raise Error, "card is required" if card.nil?
 
-    dir = Rails.root.join("tmp", "card_images")
+    # Cloud Run filesystem is read-only except /tmp.
+    dir = Pathname.new(Dir.tmpdir).join("card_images")
     FileUtils.mkdir_p(dir)
 
     out_path = dir.join("#{card.id}.png")

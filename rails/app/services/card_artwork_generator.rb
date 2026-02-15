@@ -59,12 +59,13 @@ class CardArtworkGenerator
   def self.build_prompt(card)
     <<~PROMPT
       日本のファンタジーTCGのカード用アートを生成してください。正方形(1:1)。
-      テーマ: 「#{card.name}」。
+      テーマ: #{card.name} の概念/イメージ（重要: 画像内にタイトル等の文字として描かない）。
       雰囲気: #{card.flavor.presence || "魔法を唱えている感、神秘的、宝探し"}。
       スタイル: 高品質なデジタルイラスト、強い光のエフェクト、魔法陣、粒子、幻想的、背景込み。
       制約:
       - 人物・顔・手など人間の要素は入れない
-      - 文字・ロゴ・透かし・UIは入れない
+      - 文字は絶対に入れない（ひらがな/カタカナ/漢字/アルファベット/数字/記号/ルーン/象形文字/手書き文字/看板/ラベル/スタンプ/印章/署名/透かし/ロゴ/ウォーターマーク/UI/キャプション/タイポグラフィを含む）
+      - no text, no letters, no numbers, no logo, no watermark, no signature, no UI
       - 単色ベタではなく情報量のある絵にする
     PROMPT
   end

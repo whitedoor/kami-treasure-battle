@@ -32,7 +32,7 @@
 
         <div class="ktb-topbar__nav">
           <% if logged_in? %>
-            <%= link_to "レシート作成", new_receipt_path, class: "ktb-pill" %>
+            <%= link_to "カード錬成", new_receipt_path, class: "ktb-pill" %>
             <%= link_to "保持カード", owned_cards_path, class: "ktb-pill" %>
             <%= link_to "バトル", new_battle_path, class: "ktb-pill" %>
             <%= button_to "ログアウト", logout_path, method: :delete, class: "ktb-pill", form: { style: "display:inline;" } %>

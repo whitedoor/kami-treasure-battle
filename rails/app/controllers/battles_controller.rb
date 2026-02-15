@@ -8,6 +8,9 @@ class BattlesController < ApplicationController
   def create
     engine = Battle::Engine.new
     state = engine.start!(player: current_user, player_loadout: loadout_params.to_h)
+    # CPUはユーザーのスターターカード（normal）をデフォルトとして使用する
+    # ※見つからない場合のみ、Engine側のランダムロードアウトにフォールバック
+    state[:cpu_loadout] = default_cpu_loadout_for(current_user) || state[:cpu_loadout]
     save_battle_state!(state)
     redirect_to battle_path, notice: "バトルを開始しました（HP: 200）"
   rescue Battle::Engine::Error => e
@@ -69,6 +72,20 @@ class BattlesController < ApplicationController
 
   def save_battle_state!(state)
     session[:battle_state] = state.deep_stringify_keys
+  end
+
+  # returns {"gu_card_id"=>1,"choki_card_id"=>2,"pa_card_id"=>3} or nil
+  def default_cpu_loadout_for(user)
+    hands = %w[gu choki pa]
+    loadout = {}
+
+    hands.each do |hand|
+      card = user.cards.where(hand: hand, rarity: "normal").order(created_at: :asc).first
+      return nil if card.nil?
+      loadout["#{hand}_card_id"] = card.id
+    end
+
+    loadout
   end
 end
 

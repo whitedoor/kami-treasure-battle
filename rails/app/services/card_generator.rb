@@ -21,7 +21,8 @@ class CardGenerator
     card_hash = extracted.is_a?(Hash) ? (extracted["card"] || {}) : {}
 
     name = card_hash["name"].to_s.strip
-    name = fallback_name_from_items(extracted) if name.empty?
+    name = fantasy_name_avoiding_item_chars(extracted) if name.empty?
+    name = fantasy_name_avoiding_item_chars(extracted) if shares_any_item_char?(name, extracted)
     raise Error, "card.name is blank" if name.empty?
 
     hand = normalize_hand(card_hash["hand"])
@@ -44,13 +45,111 @@ class CardGenerator
     end
   end
 
-  def self.fallback_name_from_items(extracted)
-    items = extracted.is_a?(Hash) ? extracted["items"] : nil
-    first = items.is_a?(Array) ? items.first : nil
-    base = first.is_a?(Hash) ? first["name"].to_s.strip : ""
-    base.presence || "謎のレシート"
+  def self.fantasy_name_avoiding_item_chars(extracted)
+    forbidden = forbidden_chars_from_items(extracted)
+    seed = Zlib.crc32(forbidden.to_a.sort.join)
+
+    # なるべく被りにくい漢字のみで構成（「の」等も使わない）
+    prefixes_all = %w[禁忌 秘奥 冥界 星辰 虚無 残響 黎明 黄昏 幽玄 蒼穹 黒曜 白銀 深淵 紅蓮 翠嵐].freeze
+    cores_all = %w[術式 紋章 契約 詠唱 結界 秘儀 霊符 魔導 刻印 祈祷 祝詞 断章 波紋 残火 霧門].freeze
+    suffixes_all = %w[起動 発動 共鳴 解放 顕現 封印 召喚 変転 転写 増幅].freeze
+    separators = ["・", "：", "／"].freeze # 記号は比較対象外（禁止文字に含めない）
+
+    prefixes = prefixes_all.reject { |w| word_forbidden?(w, forbidden) }
+    cores = cores_all.reject { |w| word_forbidden?(w, forbidden) }
+    suffixes = suffixes_all.reject { |w| word_forbidden?(w, forbidden) }
+
+    prefix = pick_deterministic(prefixes.presence || prefixes_all, seed: seed, salt: 1)
+    core = pick_deterministic(cores.presence || cores_all, seed: seed, salt: 2)
+    suffix = pick_deterministic(suffixes.presence || suffixes_all, seed: seed, salt: 3)
+    sep = pick_deterministic(separators, seed: seed, salt: 4)
+
+    candidate = "#{prefix}#{sep}#{core}#{suffix}"
+
+    # 最終チェック（1文字でも被ったら別候補を試す）
+    return candidate[0, 18] unless shares_any_item_char?(candidate, extracted)
+
+    alt_words = (%w[幽契 影符 星印 霊環 冥律 虚標] + prefixes_all + cores_all).uniq
+    12.times do |i|
+      a = pick_deterministic(alt_words, seed: seed, salt: 10 + i)
+      b = pick_deterministic(alt_words, seed: seed, salt: 30 + i)
+      c = pick_deterministic(suffixes_all, seed: seed, salt: 50 + i)
+      attempt = "#{a}#{separators[i % separators.length]}#{b}#{c}"
+      return attempt[0, 18] unless shares_any_item_char?(attempt, extracted)
+    end
+
+    # どうしても無理なら、商品名と被りにくい記号＋漢字1語に逃がす
+    fallback = "◆秘儀◆"
+    shares_any_item_char?(fallback, extracted) ? "◆◆◆" : fallback
   end
-  private_class_method :fallback_name_from_items
+  private_class_method :fantasy_name_avoiding_item_chars
+
+  def self.pick_deterministic(list, seed:, salt:)
+    list = Array(list)
+    return "" if list.empty?
+    idx = Zlib.crc32("#{seed}-#{salt}") % list.length
+    list[idx].to_s
+  end
+  private_class_method :pick_deterministic
+
+  def self.forbidden_chars_from_items(extracted)
+    items = extracted.is_a?(Hash) ? extracted["items"] : nil
+    return Set.new unless items.is_a?(Array)
+    begin
+      require "set"
+    rescue LoadError
+      # fallthrough
+    end
+    set = defined?(Set) ? Set.new : []
+
+    items.each do |it|
+      next unless it.is_a?(Hash)
+      raw = it["name"].to_s
+      norm = normalize_for_compare(raw)
+      each_significant_char(norm) { |ch| set << ch }
+    end
+
+    set
+  end
+  private_class_method :forbidden_chars_from_items
+
+  def self.word_forbidden?(word, forbidden_set)
+    return false if forbidden_set.nil?
+    chars = []
+    each_significant_char(word) { |ch| chars << ch }
+    chars.any? { |ch| forbidden_set.include?(ch) }
+  end
+  private_class_method :word_forbidden?
+
+  def self.each_significant_char(text)
+    return enum_for(:each_significant_char, text) unless block_given?
+    norm = normalize_for_compare(text)
+    norm.each_char do |ch|
+      # 文字レベル禁止: 日本語（ひら/カタ/漢字）+ 英数
+      next unless ch.match?(/[\p{Hiragana}\p{Katakana}\p{Han}A-Za-z0-9]/)
+      yield ch
+    end
+  end
+  private_class_method :each_significant_char
+
+  def self.normalize_for_compare(text)
+    text.to_s.unicode_normalize(:nfkc).downcase.strip
+  rescue StandardError
+    text.to_s.downcase.strip
+  end
+  private_class_method :normalize_for_compare
+
+  def self.shares_any_item_char?(card_name, extracted)
+    cn = normalize_for_compare(card_name)
+    return true if cn.blank?
+
+    forbidden = forbidden_chars_from_items(extracted)
+    each_significant_char(cn) do |ch|
+      return true if forbidden.include?(ch)
+    end
+    false
+  end
+  private_class_method :shares_any_item_char?
 
   def self.normalize_hand(raw)
     v = raw.to_s.strip
