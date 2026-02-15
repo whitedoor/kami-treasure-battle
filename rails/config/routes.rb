@@ -16,5 +16,8 @@ Rails.application.routes.draw do
   resources :receipt_uploads, only: [ :show ] do
     post :generate_card, on: :member
   end
-  resources :cards, only: [ :show ]
+  resources :cards, only: [ :show ] do
+    get :image, on: :member
+    post :generate_artwork, on: :member
+  end
 end

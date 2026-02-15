@@ -102,7 +102,11 @@ sequenceDiagram
   - 画像（レシート）を入力として渡し、(1) 商品名・金額の抽出（OCR相当）と (2) カード文言（カード名/じゃんけん/説明）を **単一リクエストでJSON出力**させる
   - 生成出力は **JSONスキーマ固定**にして、Rails側でバリデーションして保存する
 - **入口（アップロード）**: ブラウザ → Rails（Cloud Run）
-  - Active Storage（本番は **GCS**）を使い、レシート画像を `<env>/receipts/` に保存（例: `development/receipts/`。可能なら **Direct Upload** でブラウザ→GCS、Railsはメタデータのみ受ける）
+  - Active Storage（本番は **GCS**）を使い、レシート画像を `<env>/receipts/` に保存（例: `development/receipts/`。可能なら **Direct Upload** でブラウザ→GCS、Railsはメタデータのみ受ける）export GEMINI_API_KEY="ここに発行したAPIキー"
+# 任意（固定したい場合）
+export GEMINI_MODEL="gemini-2.0-flash"
+
+./rails/bin/deploy_cloud_run
   - DB（Cloud SQL）に `receipt_uploads` を作成してユーザーと紐づけて **先に保存**（要件どおり）
 - **同期実行（同一HTTPリクエスト内）**:
   - RailsがGCS上のレシート画像を読み込み → Gemini APIへ送信 → 構造化JSONを受け取る

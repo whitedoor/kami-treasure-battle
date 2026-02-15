@@ -10,11 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_15_000300) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_15_000400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "cards", force: :cascade do |t|
+    t.string "artwork_bucket"
+    t.text "artwork_error"
+    t.string "artwork_gcs_uri"
+    t.bigint "artwork_generation"
+    t.string "artwork_mime_type"
+    t.string "artwork_model"
+    t.string "artwork_object_key"
+    t.text "artwork_prompt"
+    t.string "artwork_status", default: "pending", null: false
     t.integer "attack_power", null: false
     t.datetime "created_at", null: false
     t.string "flavor", default: "", null: false
@@ -23,6 +32,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_15_000300) do
     t.string "rarity", null: false
     t.bigint "receipt_upload_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["artwork_status"], name: "index_cards_on_artwork_status"
     t.index ["attack_power"], name: "index_cards_on_attack_power"
     t.index ["rarity"], name: "index_cards_on_rarity"
     t.index ["receipt_upload_id"], name: "index_cards_on_receipt_upload_id", unique: true

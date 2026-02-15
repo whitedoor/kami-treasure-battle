@@ -9,6 +9,24 @@
   <div style="margin-top: 16px;">
     <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
       <div class="ktb-note">
+        <div style="font-weight: 700; margin-bottom: 6px;">カード画像（生成AI: Imagen）</div>
+        <div style="opacity: 0.9; margin-bottom: 8px;">
+          状態: <b><%= @card.artwork_status %></b>
+          <% if @card.artwork_error.present? %>
+            <span style="color: #ffb4b4;">（<%= @card.artwork_error %>）</span>
+          <% end %>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <%= button_to "生成AIで画像を生成する", generate_artwork_card_path(@card), method: :post, class: "ktb-pill" %>
+        </div>
+        <img
+          src="<%= image_card_path(@card) %>"
+          alt="card image"
+          style="width: 100%; max-width: 420px; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);"
+        >
+      </div>
+
+      <div class="ktb-note">
         <div><b>カード名</b>: <%= @card.name %></div>
         <div><b>じゃんけん</b>: <%= @card.hand %></div>
         <div><b>フレーバー</b>: <%= @card.flavor %></div>
@@ -21,7 +39,7 @@
       <div class="ktb-note" style="opacity: 0.95;">
         <div style="font-weight: 700; margin-bottom: 6px;">MVPメモ</div>
         <div>
-          ここではまだカード画像生成はせず、まずテキスト＋レアリティの保存までを確認します。
+          画像生成はコスト/時間がかかるため、ボタン押下で明示的に実行します（失敗時はエラーを表示）。
         </div>
       </div>
     </div>

@@ -436,6 +436,7 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 8.1.2)
   rubocop-rails-omakase
+  ruby-vips
   solid_cable
   solid_cache
   solid_queue
