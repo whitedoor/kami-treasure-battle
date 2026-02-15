@@ -2,16 +2,6 @@
 
 このドキュメントは「MVP（CPU戦 + コレクション + 日次報酬）」を **Railsモノリス + PostgreSQL** で実装する前提のアーキテクチャをまとめます。
 
-## MVP構成（CPU戦 + コレクション + 日次報酬）
-
-ポイント:
-- **フロント/バックはRailsに統一**（ERB + Hotwire/Turboを基本にする）
-- **バトル進行はクライアント中心**（CPU戦なので低レイテンシで完結。必要な整合性はサーバ側で検証）
-- **所持カード・日次報酬はサーバで管理**（不正/多重受取対策）
-- **認証はDevise**（MVPはEmail/Password等。将来はOAuth追加可）
-- **データ永続はPostgreSQL**（カードマスタ/所持/ロードアウト/日次受取/将来の対戦ログ）
-- **画像はActive Storage**（開発: ローカル、将来: GCS等に移行）
-
 ## 開発環境（ローカル）
 
 リポジトリ構成:
@@ -55,44 +45,6 @@ flowchart TB
 
 ## 主要データフロー
 
-### サインイン〜プロフィール取得
-
-```mermaid
-sequenceDiagram
-  participant Web as Browser
-  participant Rails as Rails(Devise)
-  participant DB as PostgreSQL
-
-  Web->>Rails: Sign in (email/password)
-  Rails->>DB: Create/read user session
-  Rails->>DB: Read users (profile)
-  Rails-->>Web: 200 (HTML/Turbo Stream)
-```
-
-### 日次報酬（揃うまで重複なし）
-
-```mermaid
-sequenceDiagram
-  participant Web as Browser
-  participant Rails as Rails
-  participant DB as PostgreSQL
-
-  Web->>Rails: POST /daily-claim
-  Rails->>DB: BEGIN
-  Rails->>DB: SELECT daily_claims(today) FOR UPDATE/unique
-  alt alreadyClaimed
-    Rails->>DB: SELECT existing claim
-    Rails->>DB: COMMIT
-    Rails-->>Web: 200 (claimed card)
-  else notClaimed
-    Rails->>DB: SELECT cards(active=true) EXCEPT owned_cards
-    Rails->>DB: INSERT owned_cards(card_id, source=daily)
-    Rails->>DB: INSERT daily_claims(today, card_id)
-    Rails->>DB: COMMIT
-    Rails-->>Web: 200 (new card)
-  end
-```
-
 ### レシートからカード生成（OCR + 生成AI + 画像合成）
 
 要件（`docs/create-card.md`）:
@@ -130,102 +82,92 @@ sequenceDiagram
   participant DB as Cloud SQL (PostgreSQL)
 
   Web->>Rails: レシートアップロード（POST）
-  Rails->>DB: receipt_uploads 作成(status=processing)
+  Rails->>DB: receipt_uploads 作成(status=uploaded, user_id=...)
   Rails->>GCS: 画像保存（Direct Upload推奨）
   Rails->>GCS: レシート画像取得
   Rails->>GM: 画像入力で items抽出 + カード文言生成(JSON)
   GM-->>Rails: 構造化JSON + 文言
   Rails->>DB: atk/rarity をアプリ側で決定
-  Rails->>DB: cards/owned_cards 保存 + status=completed
+  Rails->>DB: cards/owned_cards 保存（owned_cards.user_id=...）
   Rails-->>Web: 200（生成済みカードを表示）
 ```
 
-## MVPでの責務分割（実装の目安）
 
-- **Rails（サーバ権威が必要なもの）**
-  - 認証（セッション）
-  - カードマスタ参照
-  - 所持カード更新
-  - 日次報酬（冪等 + 原子処理で多重受取防止）
-  - ロードアウト保存（合計攻撃力<=100の検証）
-- **ブラウザ（低レイテンシで完結するもの）**
-  - CPU戦のターン進行/演出（必要なら結果だけ保存）
+### アカウント作成から保持カード確認まで
 
-## 将来: オンライン対戦（リアルタイム）拡張案
+要件（`docs/create-account.md`）:
 
-オンライン化すると「ルーム状態の同期」「不正対策（サーバ権威）」「切断/再接続」が必要になります。
-最初のMVP構成を壊さず足せる拡張として以下を想定します。
+- ユーザー名 + パスワード（8文字以上）でアカウント作成
+- 作成したアカウントでログイン状態にする
+- すべてのページはログイン後にアクセスできる
+- `/receipts/new` で作成したレシートアップロードをログインユーザーに紐づける
+- 保持カード一覧を確認できるようにする（カードのデザインはhomeと同じ）
+
+#### データモデル（最小）
 
 ```mermaid
-flowchart TB
-  subgraph gcp [GCP]
-    web[Rails Web App]
-    battle[Battle Service]
-    match[Matchmaking]
-    db[(PostgreSQL / Cloud SQL)]
-    redis[Memorystore(Redis)]
-  end
+erDiagram
+  users ||--o{ receipt_uploads : has_many
+  receipt_uploads ||--|| cards : has_one
+  users ||--o{ owned_cards : has_many
+  cards ||--o{ owned_cards : has_many
 
-  web -->|websocket/sse| battle
-  web -->|api| match
-  match --> db
-  battle --> redis
-  battle --> db
+  users {
+    bigint id PK
+    string username UK
+    string password_digest
+  }
+
+  receipt_uploads {
+    bigint id PK
+    bigint user_id FK
+    string status
+    string gcs_uri
+  }
+
+  cards {
+    bigint id PK
+    bigint receipt_upload_id FK
+    string name
+    string hand
+    int attack_power
+    string rarity
+  }
+
+  owned_cards {
+    bigint id PK
+    bigint user_id FK
+    bigint card_id FK
+  }
 ```
 
-オンライン拡張で増える設計論点:
-- **通信方式**: WebSocket / SSE / WebRTC（要件次第）
-- **状態置き場**: DB（永続） + Redis（リアルタイム状態/ロック）
-- **権威性**: サーバで手を受け取り、勝敗/ダメージ計算をサーバで確定
+#### 画面/リクエストフロー
 
-## 構成の補足（推奨のデプロイ形）
+```mermaid
+sequenceDiagram
+  participant Web as Browser
+  participant Rails as Rails
+  participant DB as PostgreSQL
 
-- **Rails（Web + API）**
-  - **Cloud Run（コンテナ）** + Secret Manager + Cloud Logging
-  - DBは **Cloud SQL(PostgreSQL)** を推奨
-  - 画像は **Active Storage + Cloud Storage**（将来CDN追加も容易）
+  Note over Web,Rails: サインアップ
+  Web->>Rails: GET /users/new
+  Rails-->>Web: アカウント作成フォーム
+  Web->>Rails: POST /users (username, password)
+  Rails->>DB: users 作成（username unique / password_digest）
+  Rails-->>Web: セッション開始（cookie）→ /
 
-## 実行計画（レシート→カード生成をMVPに載せる）
+  Note over Web,Rails: ログイン
+  Web->>Rails: GET /sessions/new
+  Rails-->>Web: ログインフォーム
+  Web->>Rails: POST /sessions (username, password)
+  Rails->>DB: users 検索 + パスワード検証
+  Rails-->>Web: セッション開始（cookie）→ /
 
-この計画は「最短で動くもの」から順に積み上げ、後から品質（精度/コスト/安全性）を上げられるようにします。
-
-### Phase 0: 仕様固定（半日〜1日）
-- 認証方式の確定（このドキュメントはDevise前提だが、Firebase併用案も別ドキュメントに存在するためどちらかに寄せる）
-- レシート抽出項目の定義（商品名/金額/店舗名のフォーマット、通貨、税込/税抜の扱い）
-- カード生成ルールの固定（攻撃力: 20/30/40/50、レアリティ閾値、じゃんけん決定ロジック）
-- 枠テンプレ画像の仕様（サイズ、セーフエリア、テキスト位置、フォント）
-
-### Phase 1: 保存基盤（1〜2日）
-- GCSバケット設計（環境プレフィックス込みで `<env>/receipts/`, `<env>/artworks/`, `<env>/cards/`。`frames/` は共通アセットとして環境分離しない運用も可）
-- Active Storage をGCSに向ける（本番）/ ローカル（開発）を切り替え可能にする
-- Cloud SQL接続、Secret Managerで鍵/設定を管理
-- IAM最小権限（Cloud Run → GCS/Vertex/Vision へのアクセス）
-
-### Phase 2: DB・API（1〜2日）
-- `receipt_uploads`（原本パス/状態/ユーザー/生成結果参照）を用意（まずは **同期**で回すのでジョブテーブルは後回しでOK）
-- レシートアップロードAPI（作成→保存→**同期生成**→200返却）
-- 失敗時のハンドリング（`failed` とエラー保存、再試行ボタンは将来）
-
-### Phase 3: 抽出 + 生成（Gemini API単独）（1〜3日）
-- Gemini API に **画像（レシート）を入力**して、商品名/金額の抽出（OCR相当）とカード文言生成を **JSONスキーマ固定**で返させる
-- Rails側でJSONをバリデーションし、`receipt_uploads` に監査用の入力/出力（例: `gemini_request`, `gemini_response`）を保存
-- 攻撃力/レアリティは **アプリ側で決定**（確率重み付けもアプリ側）
-
-### Phase 4: カード画像（MVPはプレースホルダで通す）（0.5〜1日）
-- まずはプレースホルダ画像（固定アセット）を `cards` の表示に使い、全体フローを成立させる
-- 後で画像生成を入れる前提で、画像ファイル名（GCSのオブジェクトキー）をDBに保持する設計だけは先に揃える
-
-### Phase 5: UI統合（1〜2日）
-- アップロード画面（進捗表示: ポーリング）
-- 生成結果（カード表示・コレクション反映）
-- 失敗時の表示（再試行ボタン、問い合わせ用のジョブID表示）
-
-### Phase 6: 運用・品質（継続）
-- Cloud Logging/Error Reporting、メトリクス（成功率、平均生成時間、1生成あたりコスト）
-- レート制限/不正対策（ユーザーあたり生成回数、同一画像の多重投入防止）
-- プロンプト/モデル更新の管理（A/B、バージョニング、再現性のための入力/出力保存）
-
-### 将来（必要になったら）: 非同期化
-- 同期でのタイムアウト/コスト/UXが問題になった段階で、Pub/Sub + ワーカー（Cloud Run）に分離して非同期化する
-- このとき初めてジョブテーブル（状態/再試行/冪等キー）と、結果ポーリング（または通知）を導入する
-
+  Note over Web,Rails: レシート→カード→保持一覧
+  Web->>Rails: POST /receipts (image)
+  Rails->>DB: receipt_uploads 作成(user_id=...)
+  Rails->>DB: cards/owned_cards 作成（user_id=...）
+  Web->>Rails: GET /owned_cards
+  Rails->>DB: owned_cards + cards を取得（current_userのみ）
+  Rails-->>Web: 保持カード一覧（homeと同デザイン）
+```

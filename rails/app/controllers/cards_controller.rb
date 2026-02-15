@@ -2,11 +2,11 @@ require "fileutils"
 
 class CardsController < ApplicationController
   def show
-    @card = Card.find(params[:id])
+    @card = card_scope.find(params[:id])
   end
 
   def image
-    card = Card.find(params[:id])
+    card = card_scope.find(params[:id])
     if card.artwork_status == "generated" && card.artwork_bucket.present? && card.artwork_object_key.present?
       storage = GcsUploader.send(:build_storage)
       bucket = storage.bucket(card.artwork_bucket)
@@ -28,11 +28,17 @@ class CardsController < ApplicationController
   end
 
   def generate_artwork
-    card = Card.find(params[:id])
+    card = card_scope.find(params[:id])
     CardArtworkGenerator.generate_for_card!(card)
     redirect_to card_path(card), notice: "画像生成が完了しました"
   rescue CardArtworkGenerator::Error => e
     redirect_to card_path(card), alert: "画像生成に失敗: #{e.message}"
+  end
+
+  private
+
+  def card_scope
+    Card.joins(:receipt_upload).where(receipt_uploads: { user_id: current_user.id })
   end
 end
 

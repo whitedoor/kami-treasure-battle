@@ -24,6 +24,32 @@
   </head>
 
   <body>
+    <div class="ktb-topbar">
+      <div class="ktb-topbar__inner">
+        <div class="ktb-topbar__brand">
+          <%= link_to "Kami Treasure Battle", root_path, style: "color: inherit; text-decoration: none;" %>
+        </div>
+
+        <div class="ktb-topbar__nav">
+          <% if logged_in? %>
+            <%= link_to "レシート作成", new_receipt_path, class: "ktb-pill" %>
+            <%= link_to "保持カード", owned_cards_path, class: "ktb-pill" %>
+            <%= button_to "ログアウト", logout_path, method: :delete, class: "ktb-pill", form: { style: "display:inline;" } %>
+          <% else %>
+            <%= link_to "アカウント作成", new_user_path, class: "ktb-pill" %>
+            <%= link_to "ログイン", new_session_path, class: "ktb-pill" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <% if flash[:notice].present? %>
+      <div class="ktb-flash"><%= flash[:notice] %></div>
+    <% end %>
+    <% if flash[:alert].present? %>
+      <div class="ktb-flash ktb-flash--alert"><%= flash[:alert] %></div>
+    <% end %>
+
     <%= yield %>
   </body>
 </html>

@@ -12,6 +12,12 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "home#index"
 
+  resources :users, only: [ :new, :create ]
+  resources :sessions, only: [ :new, :create ]
+  delete "/logout", to: "sessions#destroy", as: :logout
+
+  resources :owned_cards, only: [ :index ]
+
   resources :receipts, only: [ :new, :create ]
   resources :receipt_uploads, only: [ :show ] do
     post :generate_card, on: :member

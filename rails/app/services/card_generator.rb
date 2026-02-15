@@ -39,7 +39,7 @@ class CardGenerator
         attack_power: attack_power,
         rarity: rarity
       )
-      OwnedCard.create!(card: card)
+      OwnedCard.create!(card: card, user: receipt_upload.user)
       card
     end
   end

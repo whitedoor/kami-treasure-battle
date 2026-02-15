@@ -16,6 +16,7 @@ class ReceiptsController < ApplicationController
     result = GcsUploader.upload_receipt!(uploaded_file: uploaded, env_prefix: Rails.env)
 
     receipt_upload = ReceiptUpload.create!(
+      user: current_user,
       status: "uploaded",
       gcs_bucket: result.fetch(:bucket),
       gcs_object_key: result.fetch(:object_key),

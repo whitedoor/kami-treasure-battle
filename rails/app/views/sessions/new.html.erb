@@ -1,0 +1,25 @@
+<div class="ktb-page">
+  <div style="width: 100%;">
+    <div class="ktb-box">
+      <h1 class="ktb-title">ログイン</h1>
+
+      <%= form_with url: sessions_path, local: true do %>
+        <div class="ktb-field">
+          <div class="ktb-label">ユーザー名</div>
+          <%= text_field_tag :username, params[:username], class: "ktb-input", autocomplete: "username", required: true %>
+        </div>
+
+        <div class="ktb-field">
+          <div class="ktb-label">パスワード</div>
+          <%= password_field_tag :password, nil, class: "ktb-input", autocomplete: "current-password", required: true %>
+        </div>
+
+        <div class="ktb-actions">
+          <%= submit_tag "ログイン", class: "ktb-pill" %>
+          <%= link_to "アカウント作成はこちら", new_user_path, class: "ktb-pill" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+

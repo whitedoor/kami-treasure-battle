@@ -7,6 +7,8 @@ class ReceiptUpload < ApplicationRecord
     failed: "failed"
   }, validate: true
 
+  belongs_to :user
+
   has_one :card, dependent: :destroy
 
   validates :gcs_bucket, presence: true

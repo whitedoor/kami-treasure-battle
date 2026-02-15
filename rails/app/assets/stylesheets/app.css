@@ -275,3 +275,118 @@ body {
   line-height: 1.6;
   text-align: center;
 }
+
+.ktb-box {
+  width: min(520px, 92vw);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+}
+
+.ktb-title {
+  font-weight: 900;
+  font-size: 18px;
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.ktb-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.ktb-label {
+  font-weight: 800;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.ktb-input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  outline: none;
+}
+
+.ktb-input:focus {
+  border-color: rgba(255, 244, 210, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 244, 210, 0.12);
+}
+
+.ktb-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.ktb-flash {
+  width: min(720px, 92vw);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 0 auto 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.ktb-flash--alert {
+  border-color: rgba(255, 180, 180, 0.35);
+  background: rgba(255, 180, 180, 0.10);
+}
+
+.ktb-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  background: rgba(11, 15, 20, 0.65);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ktb-topbar__inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 10px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.ktb-topbar__brand {
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  opacity: 0.92;
+}
+
+.ktb-topbar__nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ktb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  width: min(980px, 92vw);
+  margin: 0 auto;
+}
+
+.ktb-card--mini {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+}

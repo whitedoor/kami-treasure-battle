@@ -1,0 +1,50 @@
+<div class="ktb-page" style="place-items: start; padding-top: 22px;">
+  <div style="width: 100%;">
+    <div class="ktb-note" style="max-width: 980px; margin: 0 auto 14px; text-align: left;">
+      <div style="font-weight: 900; font-size: 18px; opacity: 0.95;">保持カード一覧</div>
+      <div style="opacity: 0.85; margin-top: 6px;">
+        いま保持しているカードです。タップすると詳細を開きます。
+      </div>
+    </div>
+
+    <% if @owned_cards.empty? %>
+      <div class="ktb-note" style="max-width: 980px; margin: 0 auto;">
+        まだカードがありません。まずは <%= link_to "レシートをアップロード", new_receipt_path %> してください。
+      </div>
+    <% else %>
+      <div class="ktb-grid">
+        <% @owned_cards.each do |owned| %>
+          <% card = owned.card %>
+          <%= link_to card_path(card), style: "text-decoration:none; color: inherit;" do %>
+            <div class="ktb-card ktb-card--mini" aria-label="カード">
+              <div class="ktb-frame ktb-frame--copper">
+                <div class="ktb-frame__inner">
+                  <div class="ktb-card__title"><%= card.name %></div>
+
+                  <div class="ktb-card__art">
+                    <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
+                      <img
+                        src="<%= image_card_path(card) %>"
+                        alt="card image"
+                        class="ktb-card__artImage"
+                        loading="lazy"
+                        decoding="async"
+                      >
+                    </div>
+                  </div>
+
+                  <div class="ktb-card__footer">
+                    <div class="ktb-pill">攻撃力: <%= card.attack_power %></div>
+                    <div class="ktb-badge"><span><%= card.hand == "gu" ? "✊" : (card.hand == "choki" ? "✌️" : "🖐️") %></span></div>
+                    <div class="ktb-pill"><%= card.hand %></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
