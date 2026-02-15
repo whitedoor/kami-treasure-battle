@@ -1,45 +1,291 @@
-<div class="ktb-page">
-  <div>
-    <div class="ktb-note" style="margin-bottom: 12px;">
-      <%= link_to "レシート撮影→GCSアップロード（開発）", new_receipt_path, class: "ktb-pill" %>
+<% content_for :title, "レシートトレジャーバトル" %>
+
+<% content_for :head do %>
+  <style>
+    .ktb-home {
+      place-items: start center;
+      padding-top: 28px;
+    }
+
+    .ktb-home__wrap {
+      width: min(980px, 92vw);
+      display: grid;
+      gap: 16px;
+      margin: 0 auto;
+    }
+
+    .ktb-home__hero {
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow:
+        0 28px 64px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.08) inset;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ktb-home__heroImg {
+      width: 100%;
+      height: min(340px, 46vw);
+      max-height: 380px;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    .ktb-receipt {
+      position: relative;
+      border-radius: 18px;
+      /* leave space for perforated edges */
+      padding: 26px 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 242, 232, 0.92));
+      color: rgba(17, 18, 20, 0.92);
+      box-shadow:
+        0 28px 64px rgba(0, 0, 0, 0.55),
+        0 1px 0 rgba(255, 255, 255, 0.35) inset;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      overflow: hidden;
+    }
+
+    /* Perforated edges (receipt vibe) */
+    .ktb-receipt::before,
+    .ktb-receipt::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 18px;
+      background:
+        radial-gradient(circle at 9px 9px, rgba(0, 0, 0, 0.22) 0 2px, rgba(0, 0, 0, 0.0) 3px) 0 0 / 18px 18px,
+        linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.0));
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .ktb-receipt::before { top: 0; }
+    .ktb-receipt::after { bottom: 0; transform: rotate(180deg); }
+
+    .ktb-receipt__stamp {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      letter-spacing: 0.12em;
+      font-weight: 900;
+      font-size: 12px;
+      text-transform: uppercase;
+      opacity: 0.65;
+      text-align: center;
+      margin-bottom: 10px;
+      user-select: none;
+    }
+
+    .ktb-receipt__title {
+      margin: 0;
+      text-align: center;
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      font-size: clamp(22px, 3.5vw, 34px);
+      line-height: 1.15;
+    }
+
+    .ktb-receipt__lead {
+      margin: 10px auto 0;
+      max-width: 62ch;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.75;
+      opacity: 0.85;
+    }
+
+    .ktb-receipt__line {
+      height: 1px;
+      margin: 14px 0;
+      background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 8px, rgba(0, 0, 0, 0.0) 8px 14px);
+      opacity: 0.9;
+    }
+
+    .ktb-receipt__steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .ktb-step {
+      border-radius: 14px;
+      padding: 12px 12px;
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.10);
+    }
+
+    .ktb-step__kicker {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-weight: 900;
+      letter-spacing: 0.10em;
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .ktb-step__title {
+      margin-top: 6px;
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      font-size: 15px;
+    }
+
+    .ktb-step__body {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      opacity: 0.82;
+    }
+
+    .ktb-home__actions {
+      margin-top: 10px;
+    }
+
+    /* Re-skin pills inside the receipt (keep existing .ktb-pill base elsewhere) */
+    .ktb-receipt .ktb-pill {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.14);
+      color: rgba(17, 18, 20, 0.92);
+      text-decoration: none;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset;
+    }
+
+    .ktb-receipt .ktb-pill:hover {
+      filter: brightness(0.98);
+    }
+
+    .ktb-receipt .ktb-pill--primary {
+      background: linear-gradient(180deg, rgba(255, 224, 120, 0.55), rgba(215, 162, 29, 0.20));
+      border-color: rgba(0, 0, 0, 0.18);
+    }
+
+    .ktb-receipt .ktb-pill--battle {
+      background: linear-gradient(180deg, rgba(255, 150, 150, 0.45), rgba(210, 60, 60, 0.16));
+      border-color: rgba(0, 0, 0, 0.18);
+    }
+
+    .ktb-receipt__fine {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      opacity: 0.75;
+    }
+
+    .ktb-receipt__fineRow {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px dotted rgba(0, 0, 0, 0.28);
+      padding-bottom: 6px;
+    }
+
+    .ktb-home__dev {
+      width: min(720px, 92vw);
+      margin: 0 auto;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .ktb-home__dev summary {
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      opacity: 0.92;
+      list-style: none;
+    }
+
+    .ktb-home__dev summary::-webkit-details-marker { display: none; }
+
+    .ktb-home__devBody {
+      padding: 0 14px 14px;
+    }
+
+    .ktb-home__dev .ktb-note {
+      max-width: none;
+      text-align: left;
+      opacity: 0.82;
+      margin-top: 0;
+    }
+  </style>
+<% end %>
+
+<div class="ktb-page ktb-home">
+  <div class="ktb-home__wrap">
+    <div class="ktb-home__hero" aria-label="トップビジュアル">
+      <%= image_tag(
+            top_hero_image_path,
+            alt: "レシートと宝とバトルのトップビジュアル",
+            class: "ktb-home__heroImg",
+            loading: "lazy",
+            decoding: "async"
+          ) %>
     </div>
 
-    <div class="ktb-card" aria-label="カード表示（デモ）">
-      <div class="ktb-frame ktb-frame--ornate ktb-frame--normal">
-        <div class="ktb-frame__inner">
-          <div class="ktb-card__header" aria-label="カード名とタイプ">
-            <div class="ktb-badge ktb-badge--handTitle" aria-label="グー" title="グー">
-              <span>✊</span>
-            </div>
-            <div class="ktb-card__title">ガルカニック・フィスト</div>
-            <div class="ktb-card__headerSpacer" aria-hidden="true"></div>
-          </div>
+    <div class="ktb-receipt" role="region" aria-label="レシートトレジャーバトル">
+      <div class="ktb-receipt__stamp">KTB // RECEIPT LOOT // BATTLE READY</div>
+      <h1 class="ktb-receipt__title">レシートトレジャーバトル！！</h1>
+      <p class="ktb-receipt__lead">
+        レシートを撮るだけで、戦利品がカードになる。集めて、強化して、バトルで奪い合え。
+      </p>
 
-          <div class="ktb-card__art">
-            <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
-              <%= image_tag(
-                    "gu.png",
-                    alt: "カード画像（デモ）",
-                    class: "ktb-card__artImage",
-                    loading: "lazy",
-                    decoding: "async"
-                  ) %>
-            </div>
-          </div>
+      <div class="ktb-receipt__line"></div>
 
-          <div class="ktb-card__footer">
-            <div class="ktb-card__attack" aria-label="攻撃力">
-              攻撃力 <span class="ktb-card__attackValue">20</span>
-            </div>
-          </div>
+      <div class="ktb-receipt__steps" aria-label="遊び方">
+        <div class="ktb-step">
+          <div class="ktb-step__kicker">STEP 01</div>
+          <div class="ktb-step__title">レシート撮影</div>
+          <div class="ktb-step__body">買い物の記録が、そのまま戦利品のタネ。</div>
         </div>
+        <div class="ktb-step">
+          <div class="ktb-step__kicker">STEP 02</div>
+          <div class="ktb-step__title">カード生成</div>
+          <div class="ktb-step__body">品目が「宝」に変換されて、キラッとカード化。</div>
+        </div>
+        <div class="ktb-step">
+          <div class="ktb-step__kicker">STEP 03</div>
+          <div class="ktb-step__title">トレジャーバトル</div>
+          <div class="ktb-step__body">読み合いと運で勝ち抜け。勝者は戦利品を持ち帰る。</div>
+        </div>
+      </div>
+
+      <div class="ktb-receipt__line"></div>
+
+      <div class="ktb-actions ktb-home__actions" aria-label="開始">
+        <% if logged_in? %>
+          <%= link_to "レシートからカード生成", new_receipt_path, class: "ktb-pill ktb-pill--primary" %>
+          <%= link_to "今すぐバトル", new_battle_path, class: "ktb-pill ktb-pill--battle" %>
+          <%= link_to "保持カードを見る", owned_cards_path, class: "ktb-pill" %>
+        <% else %>
+          <%= link_to "アカウント作成", new_user_path, class: "ktb-pill ktb-pill--primary" %>
+          <%= link_to "ログイン", new_session_path, class: "ktb-pill" %>
+        <% end %>
+      </div>
+
+      <div class="ktb-receipt__fine" aria-label="補足">
+        <div class="ktb-receipt__fineRow"><span>MODE</span><span>ALPHA</span></div>
+        <div class="ktb-receipt__fineRow"><span>HINT</span><span>強いレア度ほど、フレームが豪華。</span></div>
       </div>
     </div>
 
-    <div class="ktb-note">
-      画像の「正方形トリミング」はCSS（<code>object-fit: cover</code>）で表示上の切り抜きをしています。
-      もし「ファイルとして」正方形PNGを生成したければ、別途タスク（ImageMagick/ActiveStorage variant等）で対応できます。
-    </div>
+    <details class="ktb-home__dev">
+      <summary>開発メモ（表示トリミングなど）</summary>
+      <div class="ktb-home__devBody">
+        <div class="ktb-note">
+          画像の「正方形トリミング」はCSS（<code>object-fit: cover</code>）で表示上の切り抜きをしています。
+          もし「ファイルとして」正方形PNGを生成したければ、別途タスク（ImageMagick/ActiveStorage variant等）で対応できます。
+        </div>
+
+        <div class="ktb-note" style="margin-top: 10px;">
+          <%= link_to "レシート撮影→GCSアップロード（開発）", new_receipt_path, class: "ktb-pill" %>
+        </div>
+      </div>
+    </details>
   </div>
 </div>
 
