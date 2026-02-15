@@ -1,0 +1,6 @@
+## Root-level ignores (Docker Compose / local secrets)
+
+# Environment variables (DO NOT COMMIT)
+.env
+.env.*
+

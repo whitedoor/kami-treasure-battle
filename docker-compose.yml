@@ -30,10 +30,20 @@ services:
       GCS_BUCKET: ${GCS_BUCKET:-}
       GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+      # Gemini (Vertex / OAuth2)
+      GEMINI_AUTH_MODE: ${GEMINI_AUTH_MODE:-}
+      GEMINI_VERTEX_LOCATION: ${GEMINI_VERTEX_LOCATION:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      # Optional timeouts
+      GEMINI_OPEN_TIMEOUT_SECONDS: ${GEMINI_OPEN_TIMEOUT_SECONDS:-}
+      GEMINI_READ_TIMEOUT_SECONDS: ${GEMINI_READ_TIMEOUT_SECONDS:-}
     volumes:
       - ./rails:/app
       - ./png:/png:ro
       - bundle_cache:/usr/local/bundle
+      # Optional: Use ADC (Application Default Credentials) from host (read-only)
+      # Create it on host with: gcloud auth application-default login
+      - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
     ports:
       - "3000:3000"
     depends_on:

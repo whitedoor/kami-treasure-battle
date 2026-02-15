@@ -11,6 +11,8 @@ class GeminiReceiptExtractor
   # Note: Vertex AI のGeminiはリージョン依存。Cloud Runのリージョンと一致する必要はありません。
   # asia-northeast1 で未提供/未アクセスのケースがあるため、デフォルトは提供範囲が広い us-central1 に寄せる。
   DEFAULT_VERTEX_LOCATION = "us-central1".freeze
+  DEFAULT_OPEN_TIMEOUT_SECONDS = 10
+  DEFAULT_READ_TIMEOUT_SECONDS = 60
 
   # image_path: String (path to local file)
   # mime_type: String (e.g. "image/jpeg")
@@ -75,8 +77,8 @@ class GeminiReceiptExtractor
 
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
-    http.open_timeout = Integer(ENV.fetch("GEMINI_OPEN_TIMEOUT_SECONDS", "10"))
-    http.read_timeout = Integer(ENV.fetch("GEMINI_READ_TIMEOUT_SECONDS", "60"))
+    http.open_timeout = env_int("GEMINI_OPEN_TIMEOUT_SECONDS", DEFAULT_OPEN_TIMEOUT_SECONDS)
+    http.read_timeout = env_int("GEMINI_READ_TIMEOUT_SECONDS", DEFAULT_READ_TIMEOUT_SECONDS)
 
     req = Net::HTTP::Post.new(uri.request_uri)
     req["Content-Type"] = "application/json; charset=utf-8"
@@ -170,8 +172,8 @@ class GeminiReceiptExtractor
 
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
-    http.open_timeout = Integer(ENV.fetch("GEMINI_OPEN_TIMEOUT_SECONDS", "10"))
-    http.read_timeout = Integer(ENV.fetch("GEMINI_READ_TIMEOUT_SECONDS", "60"))
+    http.open_timeout = env_int("GEMINI_OPEN_TIMEOUT_SECONDS", DEFAULT_OPEN_TIMEOUT_SECONDS)
+    http.read_timeout = env_int("GEMINI_READ_TIMEOUT_SECONDS", DEFAULT_READ_TIMEOUT_SECONDS)
 
     req = Net::HTTP::Post.new(uri.request_uri)
     req["Content-Type"] = "application/json; charset=utf-8"
@@ -203,6 +205,15 @@ class GeminiReceiptExtractor
     }
   end
   private_class_method :extract_via_vertex!
+
+  def self.env_int(name, default_value)
+    raw = ENV[name].to_s.strip
+    return Integer(default_value) if raw.empty?
+    Integer(raw)
+  rescue ArgumentError, TypeError
+    Integer(default_value)
+  end
+  private_class_method :env_int
 
   def self.parse_jsonish(text)
     return {} if text.strip.empty?

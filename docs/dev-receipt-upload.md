@@ -23,6 +23,10 @@ gcloud auth application-default login
 
 ※ `GCP_PROJECT_ID` は未設定でも動くことが多いですが、明示したい場合は設定してください。
 
+Docker Compose を使う場合:
+- `docker-compose.yml` は `~/.config/gcloud` を `web` コンテナへ read-only でマウントするため、ADCを作っておくとそのままコンテナ内からVertex AIを呼べます。
+- もし過去に「ADCファイルがディレクトリとして作られてしまった」場合は、`~/.config/gcloud/application_default_credentials.json` が **ファイル** になっているか確認してください。
+
 ### B. サービスアカウントキー（Docker等）
 
 - サービスアカウントに「Storage Object Creator」相当の権限を付与
