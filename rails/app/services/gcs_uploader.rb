@@ -39,6 +39,49 @@ class GcsUploader
     }
   end
 
+  # Uploads default janken images (gu/choki/pa) to:
+  #   <env_prefix>/card_defaults/janken/<hand>.png
+  #
+  # Returns:
+  #   { bucket:, uploaded: [{ hand:, object_key:, gcs_uri:, generation: }], skipped: [...] }
+  def self.upload_default_janken_images!(env_prefix: Rails.env, overwrite: false)
+    bucket_name = ENV["GCS_BUCKET"]
+    raise Error, "ENV['GCS_BUCKET'] is not set" if bucket_name.blank?
+
+    storage = build_storage
+    bucket = storage.bucket(bucket_name)
+    raise Error, "GCS bucket not found: #{bucket_name.inspect}" if bucket.nil?
+
+    uploaded = []
+    skipped = []
+
+    CardDefaultImages::HANDS.each do |hand|
+      local_path = CardDefaultImages.local_path_for(hand)
+      object_key = CardDefaultImages.gcs_object_key_for(hand, env_prefix: env_prefix)
+
+      existing = bucket.file(object_key)
+      if existing.present? && !overwrite
+        skipped << {
+          hand: hand,
+          object_key: object_key,
+          gcs_uri: "gs://#{bucket_name}/#{object_key}",
+          generation: existing.generation
+        }
+        next
+      end
+
+      file = bucket.create_file(local_path, object_key, content_type: "image/png")
+      uploaded << {
+        hand: hand,
+        object_key: object_key,
+        gcs_uri: "gs://#{bucket_name}/#{object_key}",
+        generation: file.generation
+      }
+    end
+
+    { bucket: bucket_name, uploaded: uploaded, skipped: skipped }
+  end
+
   def self.build_storage
     project_id = ENV["GCP_PROJECT_ID"].presence
     credentials = ENV["GOOGLE_APPLICATION_CREDENTIALS"].presence

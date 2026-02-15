@@ -49,3 +49,25 @@ cp .env.example .env
 ```
 
 必要な値（`GCS_BUCKET` / `GEMINI_API_KEY` など）だけ埋めてから `docker compose up` してください。
+
+## 任意: デフォルトじゃんけん画像（GCSへアップロード）
+
+スターターカード（`gu/choki/pa`）のデフォルト画像は、GCS上の `<env>/card_defaults/janken/{gu,choki,pa}.png` を参照します。
+
+ローカル（Docker Compose）でアップロードする例:
+
+```bash
+docker compose exec web bin/rails gcs:upload_janken_defaults
+```
+
+既に存在する場合も上書きしたいとき:
+
+```bash
+docker compose exec web env OVERWRITE=1 bin/rails gcs:upload_janken_defaults
+```
+
+既存ユーザーのスターターカードへ参照を付け直す（必要な場合）:
+
+```bash
+docker compose exec web bin/rails card:backfill_default_janken_artworks
+```

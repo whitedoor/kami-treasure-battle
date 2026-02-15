@@ -11,13 +11,14 @@ class CardsController < ApplicationController
       storage = GcsUploader.send(:build_storage)
       bucket = storage.bucket(card.artwork_bucket)
       file = bucket&.file(card.artwork_object_key)
-      return render(plain: "artwork not found in GCS", status: :not_found) if file.nil?
 
-      tmp_dir = Rails.root.join("tmp", "card_artworks_cache")
-      FileUtils.mkdir_p(tmp_dir)
-      tmp_path = tmp_dir.join("#{card.id}.png")
-      file.download(tmp_path.to_s)
-      return send_file tmp_path.to_s, type: card.artwork_mime_type.presence || "image/png", disposition: "inline"
+      if file.present?
+        tmp_dir = Rails.root.join("tmp", "card_artworks_cache")
+        FileUtils.mkdir_p(tmp_dir)
+        tmp_path = tmp_dir.join("#{card.id}.png")
+        file.download(tmp_path.to_s)
+        return send_file tmp_path.to_s, type: card.artwork_mime_type.presence || "image/png", disposition: "inline"
+      end
     end
 
     # fallback: placeholder-based image

@@ -19,6 +19,7 @@ class CardImageGenerator
 
     artwork_path =
       ENV["CARD_ARTWORK_PATH"].presence ||
+      default_artwork_path_for(card) ||
       Dir["/png/*.{png,webp,jpg,jpeg}"].sort.first
 
     raise Error, "no artwork found. Put an image in /png or set CARD_ARTWORK_PATH" if artwork_path.blank?
@@ -32,6 +33,16 @@ class CardImageGenerator
 
     out_path.to_s
   end
+
+  def self.default_artwork_path_for(card)
+    return nil if card.respond_to?(:hand) == false
+    hand = card.hand.to_s
+    return nil unless CardDefaultImages::HANDS.include?(hand)
+    CardDefaultImages.local_path_for(hand)
+  rescue CardDefaultImages::Error
+    nil
+  end
+  private_class_method :default_artwork_path_for
 
   def self.fit_cover(image, width:, height:)
     scale = [width.to_f / image.width, height.to_f / image.height].max
