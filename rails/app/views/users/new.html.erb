@@ -1,30 +1,28 @@
 <div class="ktb-page">
-  <div style="width: 100%;">
-    <div class="ktb-box">
-      <h1 class="ktb-title">アカウント作成</h1>
+  <div class="ktb-box">
+    <h1 class="ktb-title">アカウント作成</h1>
 
-      <%= form_with model: @user, url: users_path, local: true do |f| %>
-        <div class="ktb-field">
-          <div class="ktb-label">ユーザー名</div>
-          <%= f.text_field :username, class: "ktb-input", autocomplete: "username", required: true %>
-        </div>
+    <%= form_with model: @user, url: users_path, local: true do |f| %>
+      <div class="ktb-field">
+        <div class="ktb-label">ユーザー名</div>
+        <%= f.text_field :username, class: "ktb-input", autocomplete: "username", required: true %>
+      </div>
 
-        <div class="ktb-field">
-          <div class="ktb-label">パスワード（8文字以上）</div>
-          <%= f.password_field :password, class: "ktb-input", autocomplete: "new-password", required: true, minlength: 8 %>
-        </div>
+      <div class="ktb-field">
+        <div class="ktb-label">パスワード（8文字以上）</div>
+        <%= f.password_field :password, class: "ktb-input", autocomplete: "new-password", required: true, minlength: 8 %>
+      </div>
 
-        <div class="ktb-field">
-          <div class="ktb-label">パスワード（確認）</div>
-          <%= f.password_field :password_confirmation, class: "ktb-input", autocomplete: "new-password", required: true, minlength: 8 %>
-        </div>
+      <div class="ktb-field">
+        <div class="ktb-label">パスワード（確認）</div>
+        <%= f.password_field :password_confirmation, class: "ktb-input", autocomplete: "new-password", required: true, minlength: 8 %>
+      </div>
 
-        <div class="ktb-actions">
-          <%= f.submit "作成してはじめる", class: "ktb-pill" %>
-          <%= link_to "ログインはこちら", new_session_path, class: "ktb-pill" %>
-        </div>
-      <% end %>
-    </div>
+      <div class="ktb-actions">
+        <%= f.submit "作成してはじめる", class: "ktb-pill" %>
+        <%= link_to "ログインはこちら", new_session_path, class: "ktb-pill" %>
+      </div>
+    <% end %>
   </div>
 </div>
 
