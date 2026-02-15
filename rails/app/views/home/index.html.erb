@@ -5,9 +5,15 @@
     </div>
 
     <div class="ktb-card" aria-label="カード表示（デモ）">
-      <div class="ktb-frame ktb-frame--copper">
+      <div class="ktb-frame ktb-frame--ornate ktb-frame--normal">
         <div class="ktb-frame__inner">
-          <div class="ktb-card__title">ガルカニック・フィスト</div>
+          <div class="ktb-card__header" aria-label="カード名とタイプ">
+            <div class="ktb-badge ktb-badge--handTitle" aria-label="グー" title="グー">
+              <span>✊</span>
+            </div>
+            <div class="ktb-card__title">ガルカニック・フィスト</div>
+            <div class="ktb-card__headerSpacer" aria-hidden="true"></div>
+          </div>
 
           <div class="ktb-card__art">
             <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
@@ -22,9 +28,9 @@
           </div>
 
           <div class="ktb-card__footer">
-            <div class="ktb-pill">攻撃力: 20</div>
-            <div class="ktb-badge"><span>✊</span></div>
-            <div class="ktb-pill">グー</div>
+            <div class="ktb-card__attack" aria-label="攻撃力">
+              攻撃力 <span class="ktb-card__attackValue">20</span>
+            </div>
           </div>
         </div>
       </div>

@@ -23,10 +23,23 @@
       </div>
     </div>
 
+    <% frame_theme =
+         case @card.rarity
+         when "bronze", "silver", "gold", "legend" then @card.rarity
+         else "normal"
+         end %>
     <div class="ktb-card" aria-label="カード表示">
-      <div class="ktb-frame ktb-frame--copper">
+      <div class="ktb-frame ktb-frame--ornate ktb-frame--<%= frame_theme %>">
         <div class="ktb-frame__inner">
-          <div class="ktb-card__title"><%= @card.name %></div>
+          <% hand_emoji = (@card.hand == "gu" ? "✊" : (@card.hand == "choki" ? "✌️" : "🖐️")) %>
+          <% hand_label = (@card.hand == "gu" ? "グー" : (@card.hand == "choki" ? "チョキ" : "パー")) %>
+          <div class="ktb-card__header" aria-label="カード名とタイプ">
+            <div class="ktb-badge ktb-badge--handTitle" aria-label="<%= hand_label %>" title="<%= hand_label %>">
+              <span><%= hand_emoji %></span>
+            </div>
+            <div class="ktb-card__title"><%= @card.name %></div>
+            <div class="ktb-card__headerSpacer" aria-hidden="true"></div>
+          </div>
 
           <div class="ktb-card__art">
             <div class="ktb-card__artSquare" aria-label="画像（正方形トリミング表示）">
@@ -41,9 +54,9 @@
           </div>
 
           <div class="ktb-card__footer">
-            <div class="ktb-pill">攻撃力: <%= @card.attack_power %></div>
-            <div class="ktb-badge"><span><%= @card.hand == "gu" ? "✊" : (@card.hand == "choki" ? "✌️" : "🖐️") %></span></div>
-            <div class="ktb-pill"><%= @card.hand %></div>
+            <div class="ktb-card__attack" aria-label="攻撃力">
+              攻撃力 <span class="ktb-card__attackValue"><%= @card.attack_power %></span>
+            </div>
           </div>
         </div>
       </div>

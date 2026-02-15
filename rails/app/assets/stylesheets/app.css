@@ -8,13 +8,48 @@
   --ktb-highlight: rgba(255, 255, 255, 0.10);
   --ktb-shadow: rgba(0, 0, 0, 0.55);
 
-  /* Copper theme */
-  --ktb-copper-dark: #5a2f18;
-  --ktb-copper-base: #b87333;
-  --ktb-copper-light: #ffd2a0;
-  --ktb-copper-panel-top: rgba(255, 244, 210, 0.18);
-  --ktb-copper-panel-mid: rgba(245, 208, 122, 0.12);
-  --ktb-copper-panel-bottom: rgba(184, 115, 51, 0.10);
+  /* Default theme (normal/bronze-like) */
+  --ktb-frame-ring-1: rgba(255, 244, 210, 1.0);
+  --ktb-frame-ring-2: rgba(255, 210, 160, 0.95);
+  --ktb-frame-ring-3: rgba(184, 115, 51, 0.98);
+  --ktb-frame-ring-4: rgba(255, 229, 170, 0.96);
+  --ktb-frame-ring-5: rgba(120, 70, 35, 0.98);
+  --ktb-frame-ring-6: rgba(255, 244, 210, 1.0);
+  --ktb-frame-ring-highlight: rgba(255, 244, 210, 0.35);
+
+  --ktb-frame-glow-1: rgba(255, 235, 190, 0.28);
+  --ktb-frame-glow-2: rgba(255, 210, 160, 0.16);
+
+  --ktb-panel-top: rgba(255, 244, 210, 0.18);
+  --ktb-panel-mid: rgba(245, 208, 122, 0.12);
+  --ktb-panel-bottom: rgba(184, 115, 51, 0.10);
+  --ktb-panel-solid: rgba(255, 244, 210, 0.12);
+  --ktb-etch: rgba(255, 210, 160, 0.09);
+  --ktb-inner-border: rgba(184, 115, 51, 0.45);
+  --ktb-inner-sheen: rgba(255, 210, 160, 0.10);
+  --ktb-inner-outline: rgba(90, 47, 24, 0.20);
+  --ktb-line-top: rgba(255, 244, 210, 0.70);
+  --ktb-line-bottom: rgba(184, 115, 51, 0.35);
+
+  /* Component accents (used inside themed frames) */
+  --ktb-accent-strong: rgba(184, 115, 51, 0.95);
+  --ktb-accent-soft: rgba(255, 210, 160, 0.20);
+  --ktb-chip-top: rgba(255, 244, 210, 0.18);
+  --ktb-chip-bottom: rgba(0, 0, 0, 0.0);
+  --ktb-chip-border: rgba(184, 115, 51, 0.32);
+  --ktb-pill-bg: rgba(255, 244, 210, 0.10);
+  --ktb-pill-border: rgba(184, 115, 51, 0.26);
+  --ktb-badge-border: rgba(184, 115, 51, 0.30);
+  --ktb-art-border: rgba(184, 115, 51, 0.28);
+  --ktb-art-bg: rgba(255, 244, 210, 0.14);
+
+  /* Ornaments (inside frame pseudo-elements) */
+  --ktb-ornament-dot-1: rgba(255, 244, 210, 0.95);
+  --ktb-ornament-dot-2: rgba(255, 244, 210, 0.90);
+  --ktb-ornament-dot-3: rgba(255, 244, 210, 0.88);
+  --ktb-ornament-dot-4: rgba(255, 244, 210, 0.88);
+  --ktb-ornament-sheen: rgba(255, 244, 210, 0.14);
+  --ktb-corner-ornament: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff4d2'/%3E%3Cstop offset='0.55' stop-color='%23f5d07a'/%3E%3Cstop offset='1' stop-color='%23b87333'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke='url(%23g)' stroke-width='6' stroke-linecap='round' opacity='0.95'%3E%3Cpath d='M28 210c40-10 58-42 56-74-1-22-17-42-38-46'/%3E%3Cpath d='M86 214c38-8 66-46 54-90-7-26-30-42-56-44'/%3E%3Cpath d='M56 232c36-4 72-42 62-100'/%3E%3Cpath d='M44 184c22 8 48-6 52-30 4-22-14-40-36-38'/%3E%3Ccircle cx='54' cy='214' r='10'/%3E%3Ccircle cx='86' cy='214' r='8'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 html,
@@ -58,6 +93,7 @@ body {
   padding: 14px;
 }
 
+.ktb-frame--ornate,
 .ktb-frame--copper {
   overflow: hidden; /* prevent ornate layers bleeding outside */
 }
@@ -75,6 +111,7 @@ body {
   pointer-events: none;
 }
 
+.ktb-frame--ornate::before,
 .ktb-frame--copper::before {
   /* Ornate golden frame (border ring) */
   z-index: 2;
@@ -84,21 +121,21 @@ body {
     /* tiny studs */
     radial-gradient(circle, rgba(255, 255, 255, 0.40) 0 1.2px, rgba(0, 0, 0, 0.0) 1.35px) 0 0 / 18px 18px,
     /* warm glow */
-    radial-gradient(120% 95% at 30% 10%, rgba(255, 235, 190, 0.28), rgba(0, 0, 0, 0.0) 55%),
-    radial-gradient(120% 95% at 80% 85%, rgba(255, 210, 160, 0.16), rgba(0, 0, 0, 0.0) 55%),
-    /* metallic gold */
+    radial-gradient(120% 95% at 30% 10%, var(--ktb-frame-glow-1), rgba(0, 0, 0, 0.0) 55%),
+    radial-gradient(120% 95% at 80% 85%, var(--ktb-frame-glow-2), rgba(0, 0, 0, 0.0) 55%),
+    /* metallic ring */
     conic-gradient(
       from 220deg,
-      rgba(255, 244, 210, 1.0),
-      rgba(255, 210, 160, 0.95),
-      rgba(184, 115, 51, 0.98),
-      rgba(255, 229, 170, 0.96),
-      rgba(120, 70, 35, 0.98),
-      rgba(255, 244, 210, 1.0)
+      var(--ktb-frame-ring-1),
+      var(--ktb-frame-ring-2),
+      var(--ktb-frame-ring-3),
+      var(--ktb-frame-ring-4),
+      var(--ktb-frame-ring-5),
+      var(--ktb-frame-ring-6)
     );
   box-shadow:
-    0 0 0 1px rgba(255, 244, 210, 0.35) inset,
-    0 1px 0 rgba(255, 244, 210, 0.35) inset,
+    0 0 0 1px var(--ktb-frame-ring-highlight) inset,
+    0 1px 0 var(--ktb-frame-ring-highlight) inset,
     0 0 0 10px rgba(0, 0, 0, 0.18) inset;
   pointer-events: none;
 
@@ -113,6 +150,7 @@ body {
   mask-composite: exclude;
 }
 
+.ktb-frame--ornate::after,
 .ktb-frame--copper::after {
   content: "";
   position: absolute;
@@ -123,16 +161,16 @@ body {
   background:
     /* inner thin gold line */
     linear-gradient(rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.0)) padding-box,
-    linear-gradient(180deg, rgba(255, 244, 210, 0.70), rgba(184, 115, 51, 0.35)) border-box,
+    linear-gradient(180deg, var(--ktb-line-top), var(--ktb-line-bottom)) border-box,
     /* corner ornaments (simple filigree) */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fff4d2'/%3E%3Cstop offset='0.55' stop-color='%23f5d07a'/%3E%3Cstop offset='1' stop-color='%23b87333'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke='url(%23g)' stroke-width='6' stroke-linecap='round' opacity='0.95'%3E%3Cpath d='M28 210c40-10 58-42 56-74-1-22-17-42-38-46'/%3E%3Cpath d='M86 214c38-8 66-46 54-90-7-26-30-42-56-44'/%3E%3Cpath d='M56 232c36-4 72-42 62-100'/%3E%3Cpath d='M44 184c22 8 48-6 52-30 4-22-14-40-36-38'/%3E%3Ccircle cx='54' cy='214' r='10'/%3E%3Ccircle cx='86' cy='214' r='8'/%3E%3C/g%3E%3C/svg%3E") left bottom / 180px 180px no-repeat,
+    var(--ktb-corner-ornament) left bottom / 180px 180px no-repeat,
     /* small corner dots like the sample */
-    radial-gradient(circle at 10% 10%, rgba(255, 244, 210, 0.95) 0 4px, rgba(0, 0, 0, 0.0) 5px),
-    radial-gradient(circle at 90% 10%, rgba(255, 244, 210, 0.90) 0 4px, rgba(0, 0, 0, 0.0) 5px),
-    radial-gradient(circle at 10% 90%, rgba(255, 244, 210, 0.88) 0 4px, rgba(0, 0, 0, 0.0) 5px),
-    radial-gradient(circle at 90% 90%, rgba(255, 244, 210, 0.88) 0 4px, rgba(0, 0, 0, 0.0) 5px),
+    radial-gradient(circle at 10% 10%, var(--ktb-ornament-dot-1) 0 4px, rgba(0, 0, 0, 0.0) 5px),
+    radial-gradient(circle at 90% 10%, var(--ktb-ornament-dot-2) 0 4px, rgba(0, 0, 0, 0.0) 5px),
+    radial-gradient(circle at 10% 90%, var(--ktb-ornament-dot-3) 0 4px, rgba(0, 0, 0, 0.0) 5px),
+    radial-gradient(circle at 90% 90%, var(--ktb-ornament-dot-4) 0 4px, rgba(0, 0, 0, 0.0) 5px),
     /* gentle sheen */
-    linear-gradient(180deg, rgba(255, 244, 210, 0.14), rgba(0, 0, 0, 0.0) 42%);
+    linear-gradient(180deg, var(--ktb-ornament-sheen), rgba(0, 0, 0, 0.0) 42%);
   border: 2px solid transparent;
   padding: 10px;
   background-clip: padding-box, border-box, border-box, border-box, border-box, border-box, border-box, border-box;
@@ -155,12 +193,7 @@ body {
   z-index: 1;
   box-sizing: border-box;
   border-radius: 12px;
-  background: linear-gradient(
-    180deg,
-    var(--ktb-copper-panel-top),
-    var(--ktb-copper-panel-mid) 45%,
-    var(--ktb-copper-panel-bottom)
-  );
+  background: linear-gradient(180deg, var(--ktb-panel-top), var(--ktb-panel-mid) 45%, var(--ktb-panel-bottom));
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -168,26 +201,196 @@ body {
   padding: 12px;
 }
 
+.ktb-frame--ornate .ktb-frame__inner,
 .ktb-frame--copper .ktb-frame__inner {
-  border-color: rgba(184, 115, 51, 0.45);
+  border-color: var(--ktb-inner-border);
+  background-color: var(--ktb-panel-solid);
   background:
     /* etched pattern */
     repeating-linear-gradient(
       135deg,
-      rgba(255, 210, 160, 0.09) 0px,
-      rgba(255, 210, 160, 0.09) 2px,
+      var(--ktb-etch) 0px,
+      var(--ktb-etch) 2px,
       rgba(0, 0, 0, 0.0) 2px,
       rgba(0, 0, 0, 0.0) 10px
     ),
     linear-gradient(
       180deg,
-      var(--ktb-copper-panel-top),
-      var(--ktb-copper-panel-mid) 45%,
-      var(--ktb-copper-panel-bottom)
+      var(--ktb-panel-top),
+      var(--ktb-panel-mid) 45%,
+      var(--ktb-panel-bottom)
     );
   box-shadow:
-    0 1px 0 rgba(255, 210, 160, 0.10) inset,
-    0 0 0 1px rgba(90, 47, 24, 0.20);
+    0 1px 0 var(--ktb-inner-sheen) inset,
+    0 0 0 1px var(--ktb-inner-outline);
+}
+
+/* Rarity themes */
+.ktb-frame--normal,
+.ktb-frame--bronze,
+.ktb-frame--copper {
+  /* default values already set in :root */
+}
+
+.ktb-frame--silver {
+  --ktb-frame-ring-1: rgba(246, 247, 251, 1.0);
+  --ktb-frame-ring-2: rgba(224, 229, 239, 0.98);
+  --ktb-frame-ring-3: rgba(170, 179, 196, 0.98);
+  --ktb-frame-ring-4: rgba(240, 242, 246, 0.98);
+  --ktb-frame-ring-5: rgba(109, 118, 137, 0.98);
+  --ktb-frame-ring-6: rgba(246, 247, 251, 1.0);
+  --ktb-frame-ring-highlight: rgba(246, 247, 251, 0.32);
+  --ktb-frame-glow-1: rgba(210, 230, 255, 0.22);
+  --ktb-frame-glow-2: rgba(210, 220, 235, 0.14);
+  --ktb-panel-top: rgba(232, 240, 255, 0.16);
+  --ktb-panel-mid: rgba(210, 220, 235, 0.10);
+  --ktb-panel-bottom: rgba(130, 145, 170, 0.10);
+  --ktb-panel-solid: rgba(232, 240, 255, 0.16);
+  --ktb-etch: rgba(220, 230, 245, 0.08);
+  --ktb-inner-border: rgba(190, 200, 215, 0.55);
+  --ktb-inner-sheen: rgba(230, 240, 255, 0.10);
+  --ktb-inner-outline: rgba(60, 70, 90, 0.22);
+  --ktb-line-top: rgba(246, 247, 251, 0.72);
+  --ktb-line-bottom: rgba(170, 179, 196, 0.40);
+
+  --ktb-accent-strong: rgba(190, 200, 215, 0.95);
+  --ktb-accent-soft: rgba(210, 230, 255, 0.18);
+  --ktb-chip-top: rgba(232, 240, 255, 0.18);
+  --ktb-chip-border: rgba(190, 200, 215, 0.30);
+  --ktb-pill-bg: rgba(232, 240, 255, 0.10);
+  --ktb-pill-border: rgba(190, 200, 215, 0.22);
+  --ktb-badge-border: rgba(190, 200, 215, 0.30);
+  --ktb-art-border: rgba(190, 200, 215, 0.26);
+  --ktb-art-bg: rgba(232, 240, 255, 0.12);
+
+  --ktb-ornament-dot-1: rgba(246, 247, 251, 0.95);
+  --ktb-ornament-dot-2: rgba(246, 247, 251, 0.90);
+  --ktb-ornament-dot-3: rgba(232, 240, 255, 0.88);
+  --ktb-ornament-dot-4: rgba(232, 240, 255, 0.88);
+  --ktb-ornament-sheen: rgba(232, 240, 255, 0.14);
+  --ktb-corner-ornament: none;
+}
+
+.ktb-frame--gold {
+  --ktb-frame-ring-1: rgba(255, 247, 207, 1.0);
+  --ktb-frame-ring-2: rgba(255, 224, 138, 0.98);
+  --ktb-frame-ring-3: rgba(215, 162, 29, 0.98);
+  --ktb-frame-ring-4: rgba(255, 239, 179, 0.98);
+  --ktb-frame-ring-5: rgba(124, 84, 18, 0.98);
+  --ktb-frame-ring-6: rgba(255, 247, 207, 1.0);
+  --ktb-frame-ring-highlight: rgba(255, 247, 207, 0.34);
+  --ktb-frame-glow-1: rgba(255, 241, 180, 0.30);
+  --ktb-frame-glow-2: rgba(255, 220, 130, 0.18);
+  --ktb-panel-top: rgba(255, 247, 207, 0.18);
+  --ktb-panel-mid: rgba(255, 224, 138, 0.12);
+  --ktb-panel-bottom: rgba(215, 162, 29, 0.10);
+  --ktb-panel-solid: rgba(255, 247, 207, 0.13);
+  --ktb-etch: rgba(255, 224, 138, 0.09);
+  --ktb-inner-border: rgba(215, 162, 29, 0.55);
+  --ktb-inner-sheen: rgba(255, 224, 138, 0.12);
+  --ktb-inner-outline: rgba(90, 60, 10, 0.22);
+  --ktb-line-top: rgba(255, 247, 207, 0.74);
+  --ktb-line-bottom: rgba(215, 162, 29, 0.42);
+
+  --ktb-accent-strong: rgba(215, 162, 29, 0.95);
+  --ktb-accent-soft: rgba(255, 224, 138, 0.20);
+  --ktb-chip-top: rgba(255, 247, 207, 0.18);
+  --ktb-chip-border: rgba(215, 162, 29, 0.32);
+  --ktb-pill-bg: rgba(255, 247, 207, 0.10);
+  --ktb-pill-border: rgba(215, 162, 29, 0.26);
+  --ktb-badge-border: rgba(215, 162, 29, 0.30);
+  --ktb-art-border: rgba(215, 162, 29, 0.28);
+  --ktb-art-bg: rgba(255, 247, 207, 0.13);
+
+  --ktb-ornament-dot-1: rgba(255, 247, 207, 0.95);
+  --ktb-ornament-dot-2: rgba(255, 247, 207, 0.90);
+  --ktb-ornament-dot-3: rgba(255, 224, 138, 0.88);
+  --ktb-ornament-dot-4: rgba(255, 224, 138, 0.88);
+  --ktb-ornament-sheen: rgba(255, 247, 207, 0.14);
+}
+
+.ktb-frame--legend {
+  --ktb-frame-ring-1: rgba(242, 210, 255, 1.0);
+  --ktb-frame-ring-2: rgba(207, 140, 255, 0.98);
+  --ktb-frame-ring-3: rgba(125, 44, 255, 0.98);
+  --ktb-frame-ring-4: rgba(255, 131, 198, 0.96);
+  --ktb-frame-ring-5: rgba(42, 10, 94, 0.98);
+  --ktb-frame-ring-6: rgba(242, 210, 255, 1.0);
+  --ktb-frame-ring-highlight: rgba(242, 210, 255, 0.30);
+  --ktb-frame-glow-1: rgba(220, 170, 255, 0.26);
+  --ktb-frame-glow-2: rgba(255, 150, 220, 0.16);
+  --ktb-panel-top: rgba(242, 210, 255, 0.14);
+  --ktb-panel-mid: rgba(207, 140, 255, 0.10);
+  --ktb-panel-bottom: rgba(125, 44, 255, 0.08);
+  --ktb-panel-solid: rgba(242, 210, 255, 0.12);
+  --ktb-etch: rgba(220, 170, 255, 0.08);
+  --ktb-inner-border: rgba(207, 140, 255, 0.50);
+  --ktb-inner-sheen: rgba(242, 210, 255, 0.10);
+  --ktb-inner-outline: rgba(20, 8, 40, 0.26);
+  --ktb-line-top: rgba(242, 210, 255, 0.70);
+  --ktb-line-bottom: rgba(125, 44, 255, 0.42);
+
+  --ktb-accent-strong: rgba(207, 140, 255, 0.95);
+  --ktb-accent-soft: rgba(242, 210, 255, 0.16);
+  --ktb-chip-top: rgba(242, 210, 255, 0.16);
+  --ktb-chip-border: rgba(207, 140, 255, 0.30);
+  --ktb-pill-bg: rgba(242, 210, 255, 0.08);
+  --ktb-pill-border: rgba(207, 140, 255, 0.22);
+  --ktb-badge-border: rgba(207, 140, 255, 0.28);
+  --ktb-art-border: rgba(207, 140, 255, 0.26);
+  --ktb-art-bg: rgba(242, 210, 255, 0.10);
+
+  --ktb-ornament-dot-1: rgba(242, 210, 255, 0.95);
+  --ktb-ornament-dot-2: rgba(242, 210, 255, 0.90);
+  --ktb-ornament-dot-3: rgba(207, 140, 255, 0.88);
+  --ktb-ornament-dot-4: rgba(207, 140, 255, 0.88);
+  --ktb-ornament-sheen: rgba(242, 210, 255, 0.12);
+  --ktb-corner-ornament: none;
+}
+
+/* Make components follow rarity palette (only inside themed frames) */
+.ktb-frame--ornate .ktb-card__title {
+  background: linear-gradient(180deg, var(--ktb-chip-top), var(--ktb-chip-bottom));
+  border-color: var(--ktb-chip-border);
+}
+
+.ktb-card__header {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px; /* keep title centered */
+  align-items: center;
+  gap: 10px;
+}
+
+.ktb-card__headerSpacer {
+  width: 44px;
+  height: 44px;
+}
+
+.ktb-badge--handTitle {
+  width: 44px;
+  height: 44px;
+}
+
+.ktb-frame--ornate .ktb-card__attack {
+  background: linear-gradient(180deg, var(--ktb-chip-top), var(--ktb-chip-bottom));
+  border-color: var(--ktb-chip-border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+.ktb-frame--ornate .ktb-pill {
+  background: var(--ktb-pill-bg);
+  border-color: var(--ktb-pill-border);
+}
+
+.ktb-frame--ornate .ktb-badge {
+  background:
+    radial-gradient(circle at 30% 20%, var(--ktb-accent-soft), rgba(255, 255, 255, 0.06));
+  border-color: var(--ktb-badge-border);
+}
+
+.ktb-frame--ornate .ktb-card__artSquare {
+  background-color: var(--ktb-art-bg);
+  border-color: var(--ktb-art-border);
 }
 
 .ktb-card__title {
@@ -214,6 +417,7 @@ body {
   aspect-ratio: 1 / 1;
   border-radius: 14px;
   overflow: hidden;
+  position: relative;
   background:
     radial-gradient(120% 90% at 25% 15%, rgba(255, 244, 210, 0.38), rgba(0, 0, 0, 0.0) 55%),
     radial-gradient(120% 90% at 80% 90%, rgba(245, 208, 122, 0.22), rgba(0, 0, 0, 0.0) 55%),
@@ -235,10 +439,25 @@ body {
 }
 
 .ktb-card__footer {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 10px;
+  display: block;
+  padding-top: 2px;
+}
+
+.ktb-card__attack {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ktb-card__attackValue {
+  font-size: 18px;
+  font-weight: 1000;
 }
 
 .ktb-pill {
