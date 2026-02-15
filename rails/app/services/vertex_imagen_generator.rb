@@ -75,15 +75,38 @@ class VertexImagenGenerator
     unless res.is_a?(Net::HTTPSuccess)
       message =
         json&.dig("error", "message") ||
+        json&.dig("error", "status") ||
         json&.dig("error") ||
         "Vertex Imagen request failed (status=#{res.code})"
-      raise Error, message
+      raise Error, "#{message} (status=#{res.code})"
     end
 
     prediction = json&.dig("predictions", 0) || {}
     b64 = prediction["bytesBase64Encoded"].to_s
     out_mime = prediction["mimeType"].to_s.presence || mime_type
-    raise Error, "Imagen response did not contain image bytes" if b64.empty?
+    if b64.empty?
+      filtered =
+        prediction["raiFilteredReason"].presence ||
+        prediction.dig("safetyAttributes", "blocked").presence ||
+        prediction.dig("safetyAttributes", "categories").presence
+
+      # Some responses are HTTP 200 but filtered / blocked and contain no bytes.
+      details = []
+      details << "model=#{model}"
+      details << "location=#{location}"
+      details << "prediction_keys=#{prediction.is_a?(Hash) ? prediction.keys.sort.join(',') : prediction.class}"
+      details << "raiFilteredReason=#{prediction['raiFilteredReason']}" if prediction.is_a?(Hash) && prediction.key?("raiFilteredReason")
+      details << "safetyAttributes=#{prediction['safetyAttributes'].to_json}" if prediction.is_a?(Hash) && prediction.key?("safetyAttributes")
+
+      msg =
+        if filtered.present?
+          "Imagen response was filtered/blocked and did not contain image bytes"
+        else
+          "Imagen response did not contain image bytes"
+        end
+
+      raise Error, "#{msg} (#{details.join(' ')})"
+    end
 
     {
       model: model,

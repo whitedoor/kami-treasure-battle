@@ -25,6 +25,13 @@ set -euo pipefail
 # Storage (production):
 #   GCS_BUCKET              (optional; if blank, default: ${PROJECT}_cloudbuild)
 #   PROVISION_BUCKET        (default: true)
+#
+# DB / queue (production):
+#   CLOUDSQL_INSTANCE       (default: kami-treasure-battle-db)
+#   DATABASE_URL_SECRET     (default: ${SERVICE}-database-url)
+#   SOLID_QUEUE_IN_PUMA     (default: true)
+#   MIN_INSTANCES           (default: 1)
+#   NO_CPU_THROTTLING       (default: true)
 
 need() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -50,6 +57,11 @@ ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-true}"
 GCS_BUCKET="${GCS_BUCKET:-}"
 PROVISION_BUCKET="${PROVISION_BUCKET:-true}"
 GEMINI_VERTEX_LOCATION="${GEMINI_VERTEX_LOCATION:-us-central1}"
+CLOUDSQL_INSTANCE="${CLOUDSQL_INSTANCE:-kami-treasure-battle-db}"
+DATABASE_URL_SECRET="${DATABASE_URL_SECRET:-${SERVICE}-database-url}"
+SOLID_QUEUE_IN_PUMA="${SOLID_QUEUE_IN_PUMA:-true}"
+MIN_INSTANCES="${MIN_INSTANCES:-1}"
+NO_CPU_THROTTLING="${NO_CPU_THROTTLING:-true}"
 
 if [[ -z "${PROJECT}" ]]; then
   echo "error: PROJECT is not set and gcloud project is empty" >&2
@@ -190,13 +202,37 @@ gcloud secrets add-iam-policy-binding "${GEMINI_API_KEY_SECRET}" \
   --role "roles/secretmanager.secretAccessor" >/dev/null || true
 
 set -x
+cloudsql_flags=()
+if gcloud sql instances describe "${CLOUDSQL_INSTANCE}" --project "${PROJECT}" >/dev/null 2>&1; then
+  cloudsql_conn="$(gcloud sql instances describe "${CLOUDSQL_INSTANCE}" --project "${PROJECT}" --format="value(connectionName)")"
+  if [[ -n "${cloudsql_conn}" ]]; then
+    cloudsql_flags+=(--add-cloudsql-instances "${cloudsql_conn}")
+  fi
+fi
+
+runtime_flags=()
+if [[ "${NO_CPU_THROTTLING}" == "true" ]]; then
+  runtime_flags+=(--no-cpu-throttling)
+fi
+if [[ -n "${MIN_INSTANCES}" ]]; then
+  runtime_flags+=(--min-instances "${MIN_INSTANCES}")
+fi
+
+secrets_flags=(--set-secrets "GEMINI_API_KEY=${GEMINI_API_KEY_SECRET}:latest")
+if gcloud secrets describe "${DATABASE_URL_SECRET}" --project "${PROJECT}" >/dev/null 2>&1; then
+  secrets_flags=(--set-secrets "GEMINI_API_KEY=${GEMINI_API_KEY_SECRET}:latest,DATABASE_URL=${DATABASE_URL_SECRET}:latest")
+fi
+
+env_vars="GEMINI_MODEL=${GEMINI_MODEL},GEMINI_AUTH_MODE=vertex,GEMINI_VERTEX_LOCATION=${GEMINI_VERTEX_LOCATION:-us-central1},GCS_BUCKET=${GCS_BUCKET},GCP_PROJECT_ID=${PROJECT},SOLID_QUEUE_IN_PUMA=${SOLID_QUEUE_IN_PUMA}"
 if gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT}" >/dev/null 2>&1; then
   gcloud run services update "${SERVICE}" \
     --region "${REGION}" \
     --project "${PROJECT}" \
     --image "${IMAGE}" \
-    --set-secrets "GEMINI_API_KEY=${GEMINI_API_KEY_SECRET}:latest" \
-    --set-env-vars "GEMINI_MODEL=${GEMINI_MODEL},GEMINI_AUTH_MODE=vertex,GEMINI_VERTEX_LOCATION=${GEMINI_VERTEX_LOCATION:-us-central1},GCS_BUCKET=${GCS_BUCKET},GCP_PROJECT_ID=${PROJECT}"
+    "${cloudsql_flags[@]}" \
+    "${runtime_flags[@]}" \
+    "${secrets_flags[@]}" \
+    --set-env-vars "${env_vars}"
 else
   deploy_flags=()
   if [[ "${ALLOW_UNAUTHENTICATED}" == "true" ]]; then
@@ -206,8 +242,10 @@ else
     --region "${REGION}" \
     --project "${PROJECT}" \
     --image "${IMAGE}" \
-    --set-secrets "GEMINI_API_KEY=${GEMINI_API_KEY_SECRET}:latest" \
-    --set-env-vars "GEMINI_MODEL=${GEMINI_MODEL},GEMINI_AUTH_MODE=vertex,GEMINI_VERTEX_LOCATION=${GEMINI_VERTEX_LOCATION:-us-central1},GCS_BUCKET=${GCS_BUCKET},GCP_PROJECT_ID=${PROJECT}" \
+    "${cloudsql_flags[@]}" \
+    "${runtime_flags[@]}" \
+    "${secrets_flags[@]}" \
+    --set-env-vars "${env_vars}" \
     "${deploy_flags[@]}"
 fi
 set +x

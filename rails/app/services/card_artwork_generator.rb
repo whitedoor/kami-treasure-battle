@@ -4,6 +4,7 @@ require "zlib"
 
 class CardArtworkGenerator
   class Error < StandardError; end
+  class TransientError < Error; end
 
   def self.generate_for_card!(card)
     raise Error, "card is required" if card.nil?
@@ -49,8 +50,19 @@ class CardArtworkGenerator
 
     card
   rescue VertexImagenGenerator::Error => e
-    card.update(artwork_status: "failed", artwork_error: e.message) if card&.persisted?
-    raise Error, e.message
+    # Transient failures: retryable (quota, rate limiting, temporary service issues).
+    msg = e.message.to_s
+    transient =
+      msg.match?(/quota exceeded|resource_exhausted|rate|429|unavailable|deadline|timeout/i)
+
+    if transient
+      # Keep it in "generating" so the UI can keep polling for a while.
+      card.update(artwork_status: "generating", artwork_error: msg) if card&.persisted?
+      raise TransientError, msg
+    end
+
+    card.update(artwork_status: "failed", artwork_error: msg) if card&.persisted?
+    raise Error, msg
   rescue StandardError => e
     card.update(artwork_status: "failed", artwork_error: e.message) if card&.persisted?
     raise

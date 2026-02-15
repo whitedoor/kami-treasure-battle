@@ -87,11 +87,17 @@ class CardsController < ApplicationController
     end
 
     if card.artwork_status == "generating"
+      # If it looks stuck, allow re-trigger.
+      # (e.g. enqueue failed previously, instance was killed, etc.)
+      if card.updated_at < 10.minutes.ago
+        card.update!(artwork_status: "failed", artwork_error: "生成がタイムアウトしました。もう一度お試しください。")
+      else
       respond_to do |format|
         format.html { redirect_to card_path(card), notice: "画像生成中です" }
         format.json { render json: { ok: true, status: "generating", redirect_to: card_path(card) } }
       end
       return
+      end
     end
 
     # pending/failed などはキューに積んで即時返す（ページ遷移と同時に開始したい）

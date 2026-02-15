@@ -68,7 +68,13 @@ export default class extends Controller {
 
     const tick = async () => {
       tries += 1
-      if (tries > maxTries) return
+      if (tries > maxTries) {
+        this.setStatusUi("時間超過")
+        this.setErrorUi("画像生成に時間がかかっています。しばらく待ってから再読み込みしてください。")
+        // Show placeholder image so the page doesn't look stuck forever.
+        this.showImageHideSkeleton()
+        return
+      }
 
       const res = await fetch(this.pollUrlValue, {
         headers: { Accept: "application/json" },
